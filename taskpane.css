@@ -43,7 +43,9 @@ label {
     gap: 8px;
 }
 
-input[type="url"] {
+input[type="url"],
+input[type="text"],
+input[type="password"] {
     flex: 1;
     padding: 8px 12px;
     font-size: 14px;
@@ -53,9 +55,35 @@ input[type="url"] {
     transition: border-color 0.15s;
 }
 
-input[type="url"]:focus {
+input[type="url"]:focus,
+input[type="text"]:focus,
+input[type="password"]:focus {
     border-color: #0078d4;
     box-shadow: 0 0 0 1px #0078d4;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.password-saved-text {
+    font-size: 13px;
+    color: #107c10;
+    margin-bottom: 4px;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: #0078d4;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.btn-link:hover {
+    color: #106ebe;
 }
 
 .btn-primary {

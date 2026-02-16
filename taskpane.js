@@ -1,10 +1,17 @@
 /* global Office, Word, OoxmlToHtml */
 
-const STORAGE_KEY = "wordtowp_site_url";
+const STORAGE_KEY_URL = "wordtowp_site_url";
+const STORAGE_KEY_USER = "wordtowp_username";
+const STORAGE_KEY_APP_PASS = "wordtowp_app_password";
 
 let wpUrlInput;
-let saveUrlBtn;
-let urlStatus;
+let wpUsernameInput;
+let wpAppPasswordInput;
+let passwordSection;
+let passwordSavedSection;
+let updatePasswordBtn;
+let saveBtn;
+let settingsStatus;
 let publishBtn;
 let publishText;
 let publishStatus;
@@ -17,37 +24,91 @@ Office.onReady((info) => {
 
 function initUI() {
     wpUrlInput = document.getElementById("wp-url");
-    saveUrlBtn = document.getElementById("save-url-btn");
-    urlStatus = document.getElementById("url-status");
+    wpUsernameInput = document.getElementById("wp-username");
+    wpAppPasswordInput = document.getElementById("wp-app-password");
+    passwordSection = document.getElementById("password-section");
+    passwordSavedSection = document.getElementById("password-saved-section");
+    updatePasswordBtn = document.getElementById("update-password-btn");
+    saveBtn = document.getElementById("save-btn");
+    settingsStatus = document.getElementById("settings-status");
     publishBtn = document.getElementById("publish-btn");
     publishText = document.getElementById("publish-text");
     publishStatus = document.getElementById("publish-status");
 
-    // Load saved URL
-    const savedUrl = localStorage.getItem(STORAGE_KEY);
-    if (savedUrl) {
-        wpUrlInput.value = savedUrl;
-        publishBtn.disabled = false;
-        setStatus(urlStatus, "Saved", "success");
-    }
+    loadSavedSettings();
 
-    saveUrlBtn.addEventListener("click", saveUrl);
+    saveBtn.addEventListener("click", saveSettings);
+    updatePasswordBtn.addEventListener("click", showUpdatePassword);
     publishBtn.addEventListener("click", publish);
     wpUrlInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") saveUrl();
+        if (e.key === "Enter") saveSettings();
+    });
+    wpUsernameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") saveSettings();
+    });
+    wpAppPasswordInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") saveSettings();
     });
 }
 
-function saveUrl() {
+function loadSavedSettings() {
+    const savedUrl = localStorage.getItem(STORAGE_KEY_URL);
+    const savedUser = localStorage.getItem(STORAGE_KEY_USER);
+    const savedPass = localStorage.getItem(STORAGE_KEY_APP_PASS);
+
+    if (savedUrl) wpUrlInput.value = savedUrl;
+    if (savedUser) wpUsernameInput.value = savedUser;
+
+    if (savedPass) {
+        passwordSection.classList.add("hidden");
+        passwordSavedSection.classList.remove("hidden");
+        publishBtn.disabled = false;
+        setStatus(settingsStatus, "Settings saved", "success");
+    } else {
+        passwordSection.classList.remove("hidden");
+        passwordSavedSection.classList.add("hidden");
+        publishBtn.disabled = true;
+    }
+}
+
+function showUpdatePassword() {
+    localStorage.removeItem(STORAGE_KEY_APP_PASS);
+    wpAppPasswordInput.value = "";
+    passwordSection.classList.remove("hidden");
+    passwordSavedSection.classList.add("hidden");
+    publishBtn.disabled = true;
+    wpAppPasswordInput.focus();
+    setStatus(settingsStatus, "Enter new application password and click Save", "info");
+}
+
+function saveSettings() {
     const url = normalizeUrl(wpUrlInput.value.trim());
+    const username = wpUsernameInput.value.trim();
+    const appPassword = wpAppPasswordInput.value.trim().replace(/\s/g, "");
+
     if (!url) {
-        setStatus(urlStatus, "Please enter a valid URL.", "error");
+        setStatus(settingsStatus, "Please enter a valid WordPress URL.", "error");
         return;
     }
+    if (!username) {
+        setStatus(settingsStatus, "Please enter your WordPress username.", "error");
+        return;
+    }
+    if (!appPassword) {
+        setStatus(settingsStatus, "Please enter a valid application password.", "error");
+        return;
+    }
+
     wpUrlInput.value = url;
-    localStorage.setItem(STORAGE_KEY, url);
+    localStorage.setItem(STORAGE_KEY_URL, url);
+    localStorage.setItem(STORAGE_KEY_USER, username);
+    localStorage.setItem(STORAGE_KEY_APP_PASS, appPassword);
+
+    passwordSection.classList.add("hidden");
+    passwordSavedSection.classList.remove("hidden");
+    wpAppPasswordInput.value = "";
     publishBtn.disabled = false;
-    setStatus(urlStatus, "Saved", "success");
+    setStatus(settingsStatus, "Settings saved", "success");
 }
 
 function normalizeUrl(url) {
@@ -59,9 +120,12 @@ function normalizeUrl(url) {
 }
 
 async function publish() {
-    const wpUrl = localStorage.getItem(STORAGE_KEY);
-    if (!wpUrl) {
-        setStatus(publishStatus, "Please save a WordPress URL first.", "error");
+    const wpUrl = localStorage.getItem(STORAGE_KEY_URL);
+    const username = localStorage.getItem(STORAGE_KEY_USER);
+    const appPassword = localStorage.getItem(STORAGE_KEY_APP_PASS);
+
+    if (!wpUrl || !username || !appPassword) {
+        setStatus(publishStatus, "Please save your WordPress URL, username, and application password first.", "error");
         return;
     }
 
@@ -97,48 +161,56 @@ async function publish() {
         // Step 4: Remove the title heading from the body content so it isn't duplicated
         const bodyHtml = removeTitleFromHtml(html, title);
 
-        // Step 5: Build the WordPress URL with content as query parameters
-        // WordPress post-new.php accepts ?post_title=...&content=...
-        publishText.textContent = "Opening WordPress...";
-        const newPostUrl = buildWordPressUrl(wpUrl, title, bodyHtml);
+        // Step 5: Create post via WordPress REST API
+        publishText.textContent = "Publishing...";
+        const postUrl = wpUrl + "/wp-json/wp/v2/posts";
+        const auth = btoa(username + ":" + appPassword);
 
-        // Open in the system browser. If the user is already logged in,
-        // they land directly on the new post editor with content pre-filled.
-        // If not logged in, WP redirects to login, and after login redirects
-        // back to the pre-filled new post page.
-        Office.context.ui.openBrowserWindow(newPostUrl);
+        const response = await fetch(postUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Basic " + auth,
+            },
+            body: JSON.stringify({
+                title: title,
+                content: bodyHtml,
+                status: "draft",
+            }),
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            let errMsg = "WordPress API error: " + response.status;
+            try {
+                const errJson = JSON.parse(errBody);
+                if (errJson.message) errMsg = errJson.message;
+                else if (errJson.code) errMsg = errJson.code + ": " + (errJson.message || errMsg);
+            } catch (_) {}
+            if (response.status === 401) {
+                errMsg = "Invalid credentials. Check your username and application password, then use Update Application Password.";
+            } else if (response.status === 403) {
+                errMsg = "Access denied. Ensure the application password has permission to create posts.";
+            }
+            throw new Error(errMsg);
+        }
+
+        const post = await response.json();
+        const editUrl = wpUrl + "/wp-admin/post.php?post=" + post.id + "&action=edit";
 
         setStatus(
             publishStatus,
-            'Opened WordPress with your post "' + title + '". Review and click Publish in WordPress.',
+            'Draft created: "' + title + '". Opening in browser...',
             "success"
         );
+
+        Office.context.ui.openBrowserWindow(editUrl);
     } catch (err) {
         setStatus(publishStatus, "Error: " + err.message, "error");
     } finally {
         publishBtn.disabled = false;
         publishText.textContent = "Publish to WordPress";
     }
-}
-
-function buildWordPressUrl(wpUrl, title, content) {
-    // Build the post-new.php URL with pre-filled title and content
-    const newPostPath = "/wp-admin/post-new.php";
-    const params = new URLSearchParams({
-        post_title: title,
-        content: content,
-    });
-    const newPostUrl = wpUrl + newPostPath + "?" + params.toString();
-
-    // Wrap in wp-login.php?redirect_to=... so that:
-    // - If logged in: WP skips login and redirects straight to post-new.php
-    // - If not logged in: WP shows login, then redirects to post-new.php after
-    const loginUrl =
-        wpUrl +
-        "/wp-login.php?redirect_to=" +
-        encodeURIComponent(newPostPath + "?" + params.toString());
-
-    return loginUrl;
 }
 
 function extractTitle(html) {
@@ -156,8 +228,6 @@ function extractTitle(html) {
 }
 
 function removeTitleFromHtml(html, title) {
-    // Remove the first h1 or h2 that matches the extracted title
-    // so it doesn't appear twice (once as WP title, once in body)
     return html.replace(/<h[12][^>]*>.*?<\/h[12]>\s*/i, "");
 }
 

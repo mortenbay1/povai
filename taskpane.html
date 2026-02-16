@@ -17,9 +17,27 @@
             <label for="wp-url">WordPress Site URL</label>
             <div class="input-row">
                 <input type="url" id="wp-url" placeholder="https://yoursite.com" />
-                <button id="save-url-btn" class="btn-secondary" title="Save URL">Save</button>
+                <button id="save-btn" class="btn-secondary" title="Save settings">Save</button>
             </div>
-            <p id="url-status" class="status-text"></p>
+
+            <label for="wp-username">WordPress Username</label>
+            <div class="input-row">
+                <input type="text" id="wp-username" placeholder="Your WordPress username" autocomplete="username" />
+            </div>
+
+            <div id="password-section">
+                <label for="wp-app-password">Application Password</label>
+                <div class="input-row">
+                    <input type="password" id="wp-app-password" placeholder="From WP: Users → Profile → Application Passwords" autocomplete="current-password" />
+                </div>
+            </div>
+
+            <div id="password-saved-section" class="hidden">
+                <p class="password-saved-text">Application password saved</p>
+                <button type="button" id="update-password-btn" class="btn-link">Update Application Password</button>
+            </div>
+
+            <p id="settings-status" class="status-text"></p>
         </section>
 
         <section id="publish-section">
@@ -33,11 +51,10 @@
             <details>
                 <summary>How it works</summary>
                 <ol>
-                    <li>Enter your WordPress site URL above and click Save.</li>
-                    <li>Click <strong>Publish to WordPress</strong>.</li>
-                    <li>WordPress opens in your browser with the post title and content already filled in.</li>
-                    <li>If you're not logged in, log in first — you'll be redirected to the new post automatically.</li>
-                    <li>Review the post and click Publish in WordPress.</li>
+                    <li>In WordPress: <strong>Users → Profile → Application Passwords</strong>. Create a new app password (e.g. "Word Add-in").</li>
+                    <li>Enter your WordPress URL, username, and the application password above. Click <strong>Save</strong>.</li>
+                    <li>Click <strong>Publish to WordPress</strong> to create a draft post directly via the REST API.</li>
+                    <li>Use <strong>Update Application Password</strong> when you need to change or rotate your credentials.</li>
                 </ol>
             </details>
         </section>

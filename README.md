@@ -1,6 +1,6 @@
 # Word to WordPress — Office Add-in
 
-A Word add-in that publishes your document as a new WordPress post with one click.
+A Word add-in that creates a draft WordPress post from your document via the REST API.
 
 ---
 
@@ -19,10 +19,15 @@ Download the `manifest.xml` file from this page (click it, then click the Downlo
 4. Browse to the `manifest.xml` file you downloaded and click **OK**
 
 **Word for Mac:**
-1. Open Word
-2. Go to **Insert** → **Add-ins** → **My Add-ins**
-3. Click the dropdown arrow and choose **Upload My Add-in**
-4. Browse to the `manifest.xml` file you downloaded and click **Upload**
+1. Open Finder and press **Cmd+Shift+G**
+2. Paste this path (replace `<username>` with your Mac username):
+   ```
+   /Users/<username>/Library/Containers/com.microsoft.Word/Data/Documents/wef
+   ```
+3. If the `wef` folder doesn't exist, create it
+4. Copy the `manifest.xml` file into this `wef` folder
+5. Restart Word (quit and reopen), then open a document
+6. Go to **Home** tab → click **Add-ins** → your add-in should appear
 
 **Word Online (Office 365):**
 1. Open a document in Word Online
@@ -38,11 +43,13 @@ A **"Publish to WP"** button appears in the **Home** tab of the Word ribbon. Cli
 
 ## How to Use
 
-1. **First time only:** Enter your WordPress site URL (e.g., `https://mysite.com`) and click **Save**.
-2. Click **Publish to WordPress**.
-3. WordPress opens in your browser with the post title and content already filled in.
-4. If you're not logged in, log in first — you'll be redirected to the new post automatically.
-5. Review the post and click **Publish** in WordPress.
+1. **First time only:** Create an Application Password in WordPress:
+   - Go to **Users** → **Profile** → **Application Passwords**
+   - Create a new app password (e.g. "Word Add-in") and copy it
+2. Enter your **WordPress site URL**, **username**, and **Application Password** in the add-in, then click **Save**. These are stored locally so you don't need to enter them again.
+3. Click **Publish to WordPress**. The add-in creates a draft post directly via the WordPress REST API and opens it in your browser.
+4. Review the post in WordPress and click **Publish** when ready.
+5. To change your password (e.g. after rotating credentials), click **Update Application Password**, enter the new password, and click **Save**.
 
 ## What gets transferred
 
@@ -57,7 +64,7 @@ A **"Publish to WP"** button appears in the **Home** tab of the Word ribbon. Cli
 
 - Images in the Word document are not transferred (upload them separately via the WordPress Media Library)
 - Complex tables and custom styles may not convert perfectly
-- Very long documents may hit browser URL length limits
+- Application Passwords require WordPress 5.6 or later
 
 ---
 
