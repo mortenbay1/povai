@@ -1,0 +1,143 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    color: #323130;
+    background: #faf9f8;
+}
+
+#app {
+    padding: 20px 16px;
+    max-width: 400px;
+}
+
+header {
+    margin-bottom: 24px;
+}
+
+h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #201f1e;
+}
+
+section {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #605e5c;
+    margin-bottom: 6px;
+}
+
+.input-row {
+    display: flex;
+    gap: 8px;
+}
+
+input[type="url"] {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #8a8886;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+input[type="url"]:focus {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px #0078d4;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: #0078d4;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #106ebe;
+}
+
+.btn-primary:active:not(:disabled) {
+    background: #005a9e;
+}
+
+.btn-primary:disabled {
+    background: #c8c6c4;
+    color: #a19f9d;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #323130;
+    background: #fff;
+    border: 1px solid #8a8886;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.btn-secondary:hover {
+    background: #f3f2f1;
+}
+
+.status-text {
+    font-size: 12px;
+    margin-top: 8px;
+    min-height: 16px;
+}
+
+.status-success {
+    color: #107c10;
+}
+
+.status-error {
+    color: #a4262c;
+}
+
+.status-info {
+    color: #0078d4;
+}
+
+details {
+    background: #fff;
+    border: 1px solid #edebe9;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+summary {
+    font-size: 13px;
+    font-weight: 600;
+    color: #605e5c;
+    cursor: pointer;
+}
+
+details ol {
+    margin-top: 10px;
+    padding-left: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #605e5c;
+}
