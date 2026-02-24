@@ -15,6 +15,9 @@ let settingsStatus;
 let publishBtn;
 let publishText;
 let publishStatus;
+let markTitleBtn;
+let markH2Btn;
+let formatStatus;
 
 Office.onReady((info) => {
     if (info.host === Office.HostType.Word) {
@@ -34,9 +37,14 @@ function initUI() {
     publishBtn = document.getElementById("publish-btn");
     publishText = document.getElementById("publish-text");
     publishStatus = document.getElementById("publish-status");
+    markTitleBtn = document.getElementById("mark-title-btn");
+    markH2Btn = document.getElementById("mark-h2-btn");
+    formatStatus = document.getElementById("format-status");
 
     loadSavedSettings();
 
+    markTitleBtn.addEventListener("click", () => applyStyle("Title"));
+    markH2Btn.addEventListener("click", () => applyStyle("Heading 2"));
     saveBtn.addEventListener("click", saveSettings);
     updatePasswordBtn.addEventListener("click", showUpdatePassword);
     publishBtn.addEventListener("click", publish);
@@ -109,6 +117,29 @@ function saveSettings() {
     wpAppPasswordInput.value = "";
     publishBtn.disabled = false;
     setStatus(settingsStatus, "Settings saved", "success");
+}
+
+async function applyStyle(styleName) {
+    setStatus(formatStatus, "", "info");
+    try {
+        await Word.run(async (context) => {
+            const range = context.document.getSelection();
+            range.paragraphs.load("items");
+            await context.sync();
+            const paragraphs = range.paragraphs.items;
+            if (paragraphs.length === 0) {
+                setStatus(formatStatus, "Select text first, then click a style.", "info");
+                return;
+            }
+            for (const para of paragraphs) {
+                para.style = styleName;
+            }
+            await context.sync();
+            setStatus(formatStatus, `Applied ${styleName} to ${paragraphs.length} paragraph(s).`, "success");
+        });
+    } catch (err) {
+        setStatus(formatStatus, "Error: " + err.message, "error");
+    }
 }
 
 function normalizeUrl(url) {
