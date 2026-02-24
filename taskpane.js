@@ -17,6 +17,7 @@ let publishText;
 let publishStatus;
 let markTitleBtn;
 let markH2Btn;
+let markNormalBtn;
 let formatStatus;
 
 Office.onReady((info) => {
@@ -39,12 +40,14 @@ function initUI() {
     publishStatus = document.getElementById("publish-status");
     markTitleBtn = document.getElementById("mark-title-btn");
     markH2Btn = document.getElementById("mark-h2-btn");
+    markNormalBtn = document.getElementById("mark-normal-btn");
     formatStatus = document.getElementById("format-status");
 
     loadSavedSettings();
 
     markTitleBtn.addEventListener("click", () => applyStyle("Title"));
     markH2Btn.addEventListener("click", () => applyStyle("Heading 2"));
+    markNormalBtn.addEventListener("click", () => applyStyle("Normal"));
     saveBtn.addEventListener("click", saveSettings);
     updatePasswordBtn.addEventListener("click", showUpdatePassword);
     publishBtn.addEventListener("click", publish);
