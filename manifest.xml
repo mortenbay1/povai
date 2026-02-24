@@ -25,7 +25,7 @@
   </Requirements>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://mortenbay1.github.io/povai/taskpane.html" />
+    <SourceLocation DefaultValue="https://mortenbay1.github.io/povai/taskpane.html?v=2" />
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>
