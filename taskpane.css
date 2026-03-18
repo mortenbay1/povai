@@ -44,6 +44,12 @@ label {
     margin-bottom: 8px;
 }
 
+.format-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .button-row {
     display: flex;
     gap: 8px;
