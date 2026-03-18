@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Publish to WordPress</title>
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <link rel="stylesheet" href="taskpane.css?v=2" />
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Publish to WordPress</h1>
+        </header>
+
+        <section id="format-section">
+            <label>Format selection</label>
+            <p class="format-hint">Select text, then click to apply style</p>
+            <div class="button-row">
+                <button type="button" id="mark-title-btn" class="btn-secondary">Rubrik</button>
+                <button type="button" id="mark-h2-btn" class="btn-secondary">Mellemrubrik</button>
+                <button type="button" id="mark-normal-btn" class="btn-secondary">Afsnit</button>
+                <button type="button" id="mark-underrubrik-btn" class="btn-secondary">Underrubrik</button>
+                <button type="button" id="mark-blockquote-btn" class="btn-secondary">Citat</button>
+            </div>
+            <p id="format-status" class="status-text"></p>
+        </section>
+
+        <section id="settings-section">
+            <label for="wp-url">WordPress Site URL</label>
+            <div class="input-row">
+                <input type="url" id="wp-url" placeholder="https://yoursite.com" />
+                <button id="save-btn" class="btn-secondary" title="Save settings">Save</button>
+            </div>
+
+            <label for="wp-username">WordPress Username</label>
+            <div class="input-row">
+                <input type="text" id="wp-username" placeholder="Your WordPress username" autocomplete="username" />
+            </div>
+
+            <div id="password-section">
+                <label for="wp-app-password">Application Password</label>
+                <div class="input-row">
+                    <input type="password" id="wp-app-password" placeholder="From WP: Users → Profile → Application Passwords" autocomplete="current-password" />
+                </div>
+            </div>
+
+            <div id="password-saved-section" class="hidden">
+                <p class="password-saved-text">Application password saved</p>
+                <button type="button" id="update-password-btn" class="btn-link">Update Application Password</button>
+            </div>
+
+            <p id="settings-status" class="status-text"></p>
+        </section>
+
+        <section id="publish-section">
+            <button id="publish-btn" class="btn-primary" disabled>
+                <span id="publish-text">Publish to WordPress</span>
+            </button>
+            <p id="publish-status" class="status-text"></p>
+        </section>
+
+        <section id="info-section">
+            <details>
+                <summary>How it works</summary>
+                <ol>
+                    <li>In WordPress: <strong>Users → Profile → Application Passwords</strong>. Create a new app password (e.g. "Word Add-in").</li>
+                    <li>Enter your WordPress URL, username, and the application password above. Click <strong>Save</strong>.</li>
+                    <li>Click <strong>Publish to WordPress</strong> to create a draft post directly via the REST API.</li>
+                    <li>Use <strong>Update Application Password</strong> when you need to change or rotate your credentials.</li>
+                </ol>
+            </details>
+        </section>
+    </div>
+
+    <script src="ooxml-to-html.js?v=2"></script>
+    <script src="taskpane.js?v=2"></script>
+</body>
+</html>
