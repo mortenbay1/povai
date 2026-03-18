@@ -18,6 +18,8 @@ let publishStatus;
 let markTitleBtn;
 let markH2Btn;
 let markNormalBtn;
+let markUnderrubrikBtn;
+let markBlockquoteBtn;
 let formatStatus;
 
 Office.onReady((info) => {
@@ -41,6 +43,8 @@ function initUI() {
     markTitleBtn = document.getElementById("mark-title-btn");
     markH2Btn = document.getElementById("mark-h2-btn");
     markNormalBtn = document.getElementById("mark-normal-btn");
+    markUnderrubrikBtn = document.getElementById("mark-underrubrik-btn");
+    markBlockquoteBtn = document.getElementById("mark-blockquote-btn");
     formatStatus = document.getElementById("format-status");
 
     loadSavedSettings();
@@ -48,6 +52,8 @@ function initUI() {
     markTitleBtn.addEventListener("click", () => applyStyle("Title"));
     markH2Btn.addEventListener("click", () => applyStyle("Heading 2"));
     markNormalBtn.addEventListener("click", () => applyStyle("Normal"));
+    markUnderrubrikBtn.addEventListener("click", applyUnderrubrik);
+    markBlockquoteBtn.addEventListener("click", applyBlockquote);
     saveBtn.addEventListener("click", saveSettings);
     updatePasswordBtn.addEventListener("click", showUpdatePassword);
     publishBtn.addEventListener("click", publish);
@@ -139,6 +145,52 @@ async function applyStyle(styleName) {
             }
             await context.sync();
             setStatus(formatStatus, `Applied ${styleName} to ${paragraphs.length} paragraph(s).`, "success");
+        });
+    } catch (err) {
+        setStatus(formatStatus, "Error: " + err.message, "error");
+    }
+}
+
+async function applyUnderrubrik() {
+    setStatus(formatStatus, "", "info");
+    try {
+        await Word.run(async (context) => {
+            const range = context.document.getSelection();
+            range.load("text");
+            await context.sync();
+            if (!range.text || !range.text.trim()) {
+                setStatus(formatStatus, "Select text first, then click Underrubrik.", "info");
+                return;
+            }
+            range.font.bold = true;
+            await context.sync();
+            setStatus(formatStatus, "Applied bold (Underrubrik) to selection.", "success");
+        });
+    } catch (err) {
+        setStatus(formatStatus, "Error: " + err.message, "error");
+    }
+}
+
+async function applyBlockquote() {
+    setStatus(formatStatus, "", "info");
+    try {
+        await Word.run(async (context) => {
+            const range = context.document.getSelection();
+            range.load("text");
+            range.paragraphs.load("items");
+            await context.sync();
+            const selectedText = range.text ? range.text.trim() : "";
+            if (!selectedText) {
+                setStatus(formatStatus, "Select text first, then click Citat.", "info");
+                return;
+            }
+            const paragraphs = range.paragraphs.items;
+            const lastPara = paragraphs[paragraphs.length - 1];
+            const insertRange = lastPara.getRange("End");
+            const newPara = insertRange.insertParagraph(selectedText, Word.InsertLocation.after);
+            newPara.style = "Quote";
+            await context.sync();
+            setStatus(formatStatus, "Inserted blockquote below selection.", "success");
         });
     } catch (err) {
         setStatus(formatStatus, "Error: " + err.message, "error");
