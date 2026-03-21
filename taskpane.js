@@ -153,13 +153,14 @@ async function applyStyleBuiltIn(styleBuiltIn, displayName) {
 
 async function applyUnderrubrik() {
     setStatus(formatStatus, "", "info");
+    let selectedText = "";
     try {
         await Word.run(async (context) => {
             const range = context.document.getSelection();
             range.load("text");
             range.paragraphs.load("items");
             await context.sync();
-            const selectedText = range.text ? range.text.trim() : "";
+            selectedText = range.text ? range.text.trim() : "";
             if (!selectedText) {
                 setStatus(formatStatus, "Select text first, then click Underrubrik.", "info");
                 return;
@@ -168,12 +169,19 @@ async function applyUnderrubrik() {
                 para.styleBuiltIn = Word.BuiltInStyleName.normal;
             }
             await context.sync();
-            const range2 = context.document.getSelection();
-            const searchResults = range2.search(selectedText, { matchCase: true });
-            searchResults.load("items");
-            await context.sync();
-            for (const match of searchResults.items) {
-                match.font.bold = true;
+        });
+        if (!selectedText) return;
+        await Word.run(async (context) => {
+            const range = context.document.getSelection();
+            if (selectedText.length <= 256) {
+                const searchResults = range.search(selectedText, { matchCase: true });
+                searchResults.load("items");
+                await context.sync();
+                for (const match of searchResults.items) {
+                    match.font.bold = true;
+                }
+            } else {
+                range.font.bold = true;
             }
             await context.sync();
             setStatus(formatStatus, "Applied bold (Underrubrik) to selection.", "success");
