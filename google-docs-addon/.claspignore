@@ -1,8 +1,5 @@
-# Do not push docs / examples into the Apps Script project
+# Optional: only needed if you add non-Apps-Script files under src/
+# clasp only uploads from rootDir (src/) — node_modules lives outside and is never scanned.
+
 README.md
 .clasp.json.example
-
-# Never push npm dependencies — causes duplicate name errors and is not valid on Apps Script
-node_modules/
-package-lock.json
-package.json

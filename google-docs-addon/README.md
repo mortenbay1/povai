@@ -9,6 +9,11 @@ Sidebar add-on that mirrors the Word add-in: WordPress publishing and formatting
 
 **Avoid `npm install -g @google/clasp`** if you see permission errors under `/usr/local/`. Use the **local install** below instead (everything goes into `node_modules/` in this folder).
 
+## Project layout
+
+- **`src/`** — the only files **clasp** uploads (`Code.gs`, `Sidebar.html`, `appsscript.json`).  
+  `npm` / `node_modules` stay **outside** `src/`, so `clasp push` never scans them (fixes duplicate-name errors from `node_modules`).
+
 ## One-time: link this repo to your script
 
 1. From the `google-docs-addon/` folder, install dependencies (installs `clasp` locally):
@@ -28,8 +33,10 @@ Sidebar add-on that mirrors the Word add-in: WordPress publishing and formatting
 
    ```bash
    cp .clasp.json.example .clasp.json
-   # Edit .clasp.json — replace YOUR_SCRIPT_ID_FROM_SCRIPT_GOOGLE_COM
+   # Edit .clasp.json: set scriptId and ensure "rootDir": "src"
    ```
+
+   If you already had `.clasp.json` with `"rootDir": "."`, change it to **`"rootDir": "src"`** after pulling this layout.
 
 4. Push files to Google:
 
@@ -43,9 +50,9 @@ Sidebar add-on that mirrors the Word add-in: WordPress publishing and formatting
 
 ## What step 3 includes
 
-- `appsscript.json` — V8 runtime, OAuth scopes for current document, sidebar UI, and external HTTP (for WordPress later).
-- `Code.gs` — `onOpen` menu, `showSidebar`, and `getActiveDocumentInfo()` sample.
-- `Sidebar.html` — sidebar with **Load document preview** to verify `google.script.run` ↔ server.
+- `src/appsscript.json` — V8 runtime, OAuth scopes for current document, sidebar UI, and external HTTP (for WordPress later).
+- `src/Code.gs` — `onOpen` menu, `showSidebar`, and `getActiveDocumentInfo()` sample.
+- `src/Sidebar.html` — sidebar with **Load document preview** to verify `google.script.run` ↔ server.
 
 ## Git
 
