@@ -83,15 +83,16 @@ const OoxmlToHtml = (() => {
                 continue;
             }
 
-            // Map Word styles to HTML elements
-            if (style && /^Heading(\d)$/.test(style)) {
-                const level = RegExp.$1;
+            // Map Word styles to HTML elements (supports English and Danish style IDs)
+            const headingMatch = style && (style.match(/^Heading(\d)$/) || style.match(/^Overskrift\s*(\d)$/i));
+            if (headingMatch) {
+                const level = headingMatch[1];
                 htmlParts.push(`<h${level}>${inlineHtml}</h${level}>`);
-            } else if (style === "Title") {
+            } else if (style === "Title" || style === "Titel") {
                 htmlParts.push(`<h1>${inlineHtml}</h1>`);
-            } else if (style === "Subtitle") {
+            } else if (style === "Subtitle" || style === "Undertitel") {
                 htmlParts.push(`<h2>${inlineHtml}</h2>`);
-            } else if (style === "Quote" || style === "IntenseQuote") {
+            } else if (style === "Quote" || style === "IntenseQuote" || style === "Citat" || style === "Intensivt citat" || style === "BlockQuotation") {
                 htmlParts.push(`<blockquote><p>${inlineHtml}</p></blockquote>`);
             } else {
                 htmlParts.push(`<p>${inlineHtml}</p>`);

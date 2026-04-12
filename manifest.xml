@@ -12,6 +12,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Publish to WordPress" />
   <Description DefaultValue="Publish your Word document as a new WordPress post with one click." />
+  <IconUrl DefaultValue="https://mortenbay1.github.io/povai/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://mortenbay1.github.io/povai/assets/icon-80.png" />
   <SupportUrl DefaultValue="https://github.com/mortenbay1/povai/" />
 
   <Hosts>
@@ -19,13 +21,13 @@
   </Hosts>
 
   <Requirements>
-    <Sets DefaultMinVersion="1.1">
-      <Set Name="WordApi" MinVersion="1.1" />
+    <Sets DefaultMinVersion="1.3">
+      <Set Name="WordApi" MinVersion="1.3" />
     </Sets>
   </Requirements>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://mortenbay1.github.io/povai/taskpane.html?v=2" />
+    <SourceLocation DefaultValue="https://mortenbay1.github.io/povai/taskpane.html" />
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>
@@ -38,6 +40,11 @@
             <OfficeTab id="TabHome">
               <Group id="WordToWPGroup">
                 <Label resid="GroupLabel" />
+                <Icon>
+                  <bt:Image size="16" resid="Icon16" />
+                  <bt:Image size="32" resid="Icon32" />
+                  <bt:Image size="80" resid="Icon80" />
+                </Icon>
                 <Control xsi:type="Button" id="WordToWPButton">
                   <Label resid="ButtonLabel" />
                   <Supertip>

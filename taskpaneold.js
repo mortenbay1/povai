@@ -18,8 +18,6 @@ let publishStatus;
 let markTitleBtn;
 let markH2Btn;
 let markNormalBtn;
-let markUnderrubrikBtn;
-let markBlockquoteBtn;
 let formatStatus;
 
 Office.onReady((info) => {
@@ -43,8 +41,6 @@ function initUI() {
     markTitleBtn = document.getElementById("mark-title-btn");
     markH2Btn = document.getElementById("mark-h2-btn");
     markNormalBtn = document.getElementById("mark-normal-btn");
-    markUnderrubrikBtn = document.getElementById("mark-underrubrik-btn");
-    markBlockquoteBtn = document.getElementById("mark-blockquote-btn");
     formatStatus = document.getElementById("format-status");
 
     loadSavedSettings();
@@ -52,11 +48,6 @@ function initUI() {
     markTitleBtn.addEventListener("click", () => applyStyle("Title"));
     markH2Btn.addEventListener("click", () => applyStyle("Heading 2"));
     markNormalBtn.addEventListener("click", () => applyStyle("Normal"));
-    markTitleBtn.addEventListener("click", () => applyStyleBuiltIn(Word.BuiltInStyleName.title, "Rubrik"));
-    markH2Btn.addEventListener("click", () => applyStyleBuiltIn(Word.BuiltInStyleName.heading2, "Mellemrubrik"));
-    markNormalBtn.addEventListener("click", () => applyStyleBuiltIn(Word.BuiltInStyleName.normal, "Brødtekst"));
-    markUnderrubrikBtn.addEventListener("click", applyUnderrubrik);
-    markBlockquoteBtn.addEventListener("click", applyBlockquote);
     saveBtn.addEventListener("click", saveSettings);
     updatePasswordBtn.addEventListener("click", showUpdatePassword);
     publishBtn.addEventListener("click", publish);
@@ -131,7 +122,7 @@ function saveSettings() {
     setStatus(settingsStatus, "Settings saved", "success");
 }
 
-async function applyStyleBuiltIn(styleBuiltIn, displayName) {
+async function applyStyle(styleName) {
     setStatus(formatStatus, "", "info");
     try {
         await Word.run(async (context) => {
@@ -144,122 +135,10 @@ async function applyStyleBuiltIn(styleBuiltIn, displayName) {
                 return;
             }
             for (const para of paragraphs) {
-                para.styleBuiltIn = styleBuiltIn;
+                para.style = styleName;
             }
             await context.sync();
-            setStatus(formatStatus, `Applied ${displayName} to ${paragraphs.length} paragraph(s).`, "success");
-        });
-    } catch (err) {
-        setStatus(formatStatus, "Error: " + err.message, "error");
-    }
-}
-
-async function applyUnderrubrik() {
-    setStatus(formatStatus, "", "info");
-    let selectedText = "";
-    try {
-        await Word.run(async (context) => {
-            const range = context.document.getSelection();
-            range.load("text");
-            range.paragraphs.load("items");
-            await context.sync();
-            selectedText = range.text ? range.text.trim() : "";
-            if (!selectedText) {
-                setStatus(formatStatus, "Select text first, then click Underrubrik.", "info");
-                return;
-            }
-            for (const para of range.paragraphs.items) {
-                para.styleBuiltIn = Word.BuiltInStyleName.normal;
-            }
-            await context.sync();
-        });
-        if (!selectedText) return;
-        await Word.run(async (context) => {
-            const range = context.document.getSelection();
-            if (selectedText.length <= 256) {
-                const searchResults = range.search(selectedText, { matchCase: true });
-                searchResults.load("items");
-                await context.sync();
-                for (const match of searchResults.items) {
-                    match.font.bold = true;
-                }
-            } else {
-                range.font.bold = true;
-            }
-            await context.sync();
-            setStatus(formatStatus, "Applied bold (Underrubrik) to selection.", "success");
-        });
-    } catch (err) {
-        setStatus(formatStatus, "Error: " + err.message, "error");
-    }
-}
-
-async function applyBlockquote() {
-    setStatus(formatStatus, "", "info");
-    try {
-        await Word.run(async (context) => {
-            const range = context.document.getSelection();
-            range.load("text");
-            range.paragraphs.load("items");
-            await context.sync();
-            const selectedText = range.text ? range.text.trim() : "";
-            if (!selectedText) {
-                setStatus(formatStatus, "Select text first, then click Citat.", "info");
-                return;
-            }
-            const paragraphs = range.paragraphs.items;
-            const lastPara = paragraphs[paragraphs.length - 1];
-            const insertRange = lastPara.getRange("End");
-            const newPara = insertRange.insertParagraph(selectedText, Word.InsertLocation.after);
-            newPara.styleBuiltIn = Word.BuiltInStyleName.quote;
-            await context.sync();
-            setStatus(formatStatus, "Inserted blockquote below selection.", "success");
-        });
-    } catch (err) {
-        setStatus(formatStatus, "Error: " + err.message, "error");
-    }
-}
-
-async function applyUnderrubrik() {
-    setStatus(formatStatus, "", "info");
-    try {
-        await Word.run(async (context) => {
-            const range = context.document.getSelection();
-            range.load("text");
-            await context.sync();
-            if (!range.text || !range.text.trim()) {
-                setStatus(formatStatus, "Select text first, then click Underrubrik.", "info");
-                return;
-            }
-            range.font.bold = true;
-            await context.sync();
-            setStatus(formatStatus, "Applied bold (Underrubrik) to selection.", "success");
-        });
-    } catch (err) {
-        setStatus(formatStatus, "Error: " + err.message, "error");
-    }
-}
-
-async function applyBlockquote() {
-    setStatus(formatStatus, "", "info");
-    try {
-        await Word.run(async (context) => {
-            const range = context.document.getSelection();
-            range.load("text");
-            range.paragraphs.load("items");
-            await context.sync();
-            const selectedText = range.text ? range.text.trim() : "";
-            if (!selectedText) {
-                setStatus(formatStatus, "Select text first, then click Citat.", "info");
-                return;
-            }
-            const paragraphs = range.paragraphs.items;
-            const lastPara = paragraphs[paragraphs.length - 1];
-            const insertRange = lastPara.getRange("End");
-            const newPara = insertRange.insertParagraph(selectedText, Word.InsertLocation.after);
-            newPara.style = "Quote";
-            await context.sync();
-            setStatus(formatStatus, "Inserted blockquote below selection.", "success");
+            setStatus(formatStatus, `Applied ${styleName} to ${paragraphs.length} paragraph(s).`, "success");
         });
     } catch (err) {
         setStatus(formatStatus, "Error: " + err.message, "error");
