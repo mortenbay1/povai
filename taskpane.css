@@ -186,3 +186,51 @@ details ol {
     line-height: 1.6;
     color: #605e5c;
 }
+
+/* ── Auto-redigér / Korrektur ───────────────────────────────────────── */
+
+#korrektur-section {
+    padding-top: 4px;
+    border-top: 1px solid #edebe9;
+}
+
+.btn-korrektur {
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: #1a3a5c;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+
+.btn-korrektur:hover:not(:disabled) {
+    background: #0f2540;
+}
+
+.btn-korrektur:active:not(:disabled) {
+    background: #0a1a2e;
+}
+
+.btn-korrektur:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+#korrektur-settings {
+    margin-top: 10px;
+}
+
+#korrektur-settings summary {
+    font-size: 12px;
+    font-weight: 400;
+    color: #8a8886;
+}
+
+#korrektur-settings summary:hover {
+    color: #323130;
+}

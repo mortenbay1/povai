@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Publish to WordPress</title>
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-    <link rel="stylesheet" href="taskpane.css?v=4" />
+    <link rel="stylesheet" href="taskpane.css?v=5" />
 </head>
 <body>
     <div id="app">
@@ -28,6 +28,28 @@
                 </div>
             </div>
             <p id="format-status" class="status-text"></p>
+        </section>
+
+        <section id="korrektur-section">
+            <label>Auto-redigér</label>
+            <p class="format-hint">Mistral gennemgår dokumentet og indsætter rettelser som sporede ændringer</p>
+            <button type="button" id="autoredigér-btn" class="btn-korrektur">
+                <span id="autoredigér-text">✦ Auto-redigér</span>
+            </button>
+            <p id="korrektur-status" class="status-text"></p>
+            <details id="korrektur-settings">
+                <summary>API-nøgle (Mistral)</summary>
+                <div class="input-row" style="margin-top: 8px;">
+                    <input
+                        type="password"
+                        id="mistral-api-key"
+                        placeholder="Indsæt Mistral API-nøgle"
+                        autocomplete="off"
+                    />
+                    <button id="save-api-key-btn" class="btn-secondary">Gem</button>
+                </div>
+                <p id="api-key-status" class="status-text"></p>
+            </details>
         </section>
 
         <section id="settings-section">
@@ -78,6 +100,7 @@
     </div>
 
     <script src="ooxml-to-html.js?v=4"></script>
-    <script src="taskpane.js?v=4"></script>
+    <script src="taskpane.js?v=5"></script>
+    <script src="mistral.js?v=1"></script>
 </body>
 </html>

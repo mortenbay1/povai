@@ -25,6 +25,7 @@ let formatStatus;
 Office.onReady((info) => {
     if (info.host === Office.HostType.Word) {
         initUI();
+        initMistralUI(); // Auto-redigér — defineret i mistral.js
     }
 });
 
@@ -205,9 +206,9 @@ async function applyBlockquote() {
                 return;
             }
             const paragraphs = range.paragraphs.items;
-            const lastPara = paragraphs[paragraphs.length - 1];
-            const insertRange = lastPara.getRange("End");
-            const newPara = insertRange.insertParagraph(selectedText, Word.InsertLocation.after);
+            const firstPara = paragraphs[0];
+            const insertRange = firstPara.getRange("Start");
+            const newPara = insertRange.insertParagraph(selectedText, Word.InsertLocation.before);
             newPara.styleBuiltIn = Word.BuiltInStyleName.quote;
             await context.sync();
             setStatus(formatStatus, "Inserted blockquote below selection.", "success");
