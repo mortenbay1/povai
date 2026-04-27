@@ -50,13 +50,14 @@ Du maa aldrig:
 
 Naar du er i tvivl om noget er en fejl eller et bevidst stilistisk valg, lader du det staa uaendret.
 
-Returner kun den rettede tekst uden kommentarer, forklaringer eller indledning.`;
+Returner kun den rettede tekst uden kommentarer, forklaringer eller indledning.
+Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.`;
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
 // Returnerer den fulde prompt-streng med stilguide injiceret,
 // eller basis-prompt alene hvis GitHub ikke kan naas.
 // Resultatet caches i sessionStorage saa det kun hentes een gang pr. session.
-const STILGUIDE_CACHE_KEY = "pov_stilguide_cache";
+const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v2";
 
 async function buildSystemPrompt() {
     const cached = sessionStorage.getItem(STILGUIDE_CACHE_KEY);
@@ -68,8 +69,8 @@ async function buildSystemPrompt() {
 
         const stilguide = await response.text();
         const prompt = MISTRAL_BASE_PROMPT +
-            "\n\n---\n\nHerunder foelger POV Internationals fulde redaktionelle stilguide. " +
-            "Brug den som autoritativ reference for alle stil- og sprogvalg:\n\n" +
+            "\n\n---\n\nStilguiden herunder er formateret i markdown til læsbarhed — " +
+            "det er KUN referencemateriale. Dit output må aldrig indeholde markdown.\n\n" +
             stilguide;
 
         sessionStorage.setItem(STILGUIDE_CACHE_KEY, prompt);
