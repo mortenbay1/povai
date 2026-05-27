@@ -90,8 +90,8 @@ Mønsteret er altid: `EMNE // GENRE` — aldrig omvendt, aldrig uden dobbeltskr�
 - **Kolon efter sætning foran citat:** Ikke standard i POV's nyhedsartikler. Direkte tale introduceres med punktum: `sætter tal på situationen. "Citat"` — **ikke** kolon.
 - **Kursiv:** Bruges til bogtitler, filmtitler, fremmedord og vægtlægning i essays/kronikker. Bruges **ikke** til direkte citater i nyhedsartikler.
 - **Fed tekst i brødteksten:** Bruges udelukkende i manchet/indledende resumé — aldrig til at fremhæve enkeltord i brødteksten.
-- **Procenttegn:** `procent` skrives ud som ord: `75 procent`, ikke `75%`
-- **Tal:** Ettallene til og med tolv skrives ud som ord i løbende tekst; derover bruges cifre. Undtagen i direkte citat og statistik.
+- **Procenttegn:** POV skriver `75 procent` — ikke `75%` (deskriptiv observation)
+- **Tal:** Ettallene til og med tolv skrives typisk ud som ord i løbende tekst; derover bruges cifre (deskriptiv observation)
 
 ---
 
@@ -152,7 +152,9 @@ Eksempler:
 
 ## 10. Særligt for korrekturlæseren (LLM-instrukser)
 
-Disse regler skal altid overholdes og har højere prioritet end generelle sproglige forbedringer:
+**ABSOLUT REGEL: Ret kun stavefejl, bøjningsfejl og grammatiske fejl. Udskift aldrig et ord med et andet ord — hverken af stilistiske, sproglige eller redaktionelle årsager. Denne regel overstyrer alt andet i denne stilguide.**
+
+Disse regler skal altid overholdes:
 
 1. **Bevar genrekoden** præcis som skrevet — ret aldrig `NYHED // OVERBLIK` til andet
 2. **Rør ikke citater** — alle ord inden for anførselstegn er ukrænkelige
@@ -160,7 +162,7 @@ Disse regler skal altid overholdes og har højere prioritet end generelle sprogl
 4. **Ingen kursiv på citater** i nyhedsartikler
 5. **Ingen koloner** foran direkte tale, medmindre de allerede er der — POV bruger punktum
 6. **Fed tekst kun i manchetten** — aldrig i brødteksten
-7. **Ændr ikke `krigen`/`konflikten`** og lignende redaktionelle ordvalg — disse er bevidste
+7. **Ændr ikke noget der ligner et bevidst redaktionelt ordvalg** — hvis du er i tvivl, lad det stå uændret
 
 ---
 
