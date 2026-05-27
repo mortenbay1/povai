@@ -25,13 +25,10 @@ Tekstens struktur er ukraenkelig:
 - Bevar alle afsnit - slet eller flet ikke afsnit
 - Bevar tekstens laengde - du maa ikke forkorte eller kondensere indhold
 
-Du retter kun:
+Du må aldrig omformulere eller omkskrive teksten. Du retter kun:
 - Stavefejl og slaafejl
 - Forkerte boejninger og grammatiske fejl
 - Manglende eller forkerte tegnsaetningstegn
-- Klodsede saetningskonstruktioner
-- Unoedigt lange saetninger med dele, der ikke tilfoejer ny information
-- Unaturlige eller angliciserede ord (fx "monitorere" til "overvaage", "persistere" til "fortsaette")
 
 POV-specifikke stilregler:
 - Komma placeres UDEN FOR det afsluttende anfoeselstegn: "tekst", - ALDRIG "tekst,"
@@ -42,7 +39,6 @@ POV-specifikke stilregler:
 - Sammensoetninger paa dansk: "jetbraendstof" - ikke "jet fuel"
 
 Du maa aldrig:
-- Aendre eller omformulere citater - disse skal gengives ord for ord praecis som i originalen
 - Slette eller omskrive faktuelle oplysninger, tal, stednavne eller personnavne
 - Omformulere saetninger, der allerede er korrekte og velfungerende
 - Tilfoeje indhold, der ikke findes i originalen
