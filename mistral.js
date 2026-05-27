@@ -53,7 +53,7 @@ Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, inge
 // Returnerer den fulde prompt-streng med stilguide injiceret,
 // eller basis-prompt alene hvis GitHub ikke kan naas.
 // Resultatet caches i sessionStorage saa det kun hentes een gang pr. session.
-const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v2";
+const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v3";
 
 async function buildSystemPrompt() {
     const cached = sessionStorage.getItem(STILGUIDE_CACHE_KEY);
@@ -67,7 +67,11 @@ async function buildSystemPrompt() {
         const prompt = MISTRAL_BASE_PROMPT +
             "\n\n---\n\nStilguiden herunder er formateret i markdown til læsbarhed — " +
             "det er KUN referencemateriale. Dit output må aldrig indeholde markdown.\n\n" +
-            stilguide;
+            stilguide +
+            "\n\n---\n\nABSOLUT REGEL: Du må kun rette stavefejl og grammatiske fejl. " +
+            "Du må ikke omskrive, omformulere, erstatte ord eller ændre sætningsstruktur — " +
+            "hverken ud fra stilguiden ovenfor eller din egen vurdering. " +
+            "Hvis du er i tvivl, lader du teksten stå uændret.";
 
         sessionStorage.setItem(STILGUIDE_CACHE_KEY, prompt);
         return prompt;
