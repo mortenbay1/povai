@@ -40,7 +40,9 @@ Du må aldrig:
 Når du er i tvivl om noget er en fejl eller et bevidst stilistisk valg, lader du det stå uændret.
 
 Returner kun den rettede tekst uden kommentarer, forklaringer eller indledning.
-Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.
+Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.`;
+
+// ── Hent stilguide fra GitHub ─────
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
 // Returnerer den fulde prompt-streng med stilguide injiceret,
