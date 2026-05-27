@@ -95,30 +95,8 @@ Mønsteret er altid: `EMNE // GENRE` — aldrig omvendt, aldrig uden dobbeltskr�
 
 ---
 
-## 6. Sprog og stil
 
-### Generelt register
-- Klart, journalistisk dansk uden unødige fremmedord
-- Faktuelle artikler: saglig, kortfattet, ingen stilistiske udsvævelser
-- Kronikker/essays: personlig stemme tilladt, gerne med litterære greb
-- Anmeldelser: analytisk-personlig tone; anmelderen argumenterer og begrunder
-
-### Ord og fraser der undgås
-- Anglicismer: `monitorere` → `overvåge`; `persistere` → `fortsætte` / `vedblive`
-- Latiniserede/kunstige verber der er fremmedartede på dansk
-- Opsvulmede konstruktioner: undgå at afslutte sætninger med indlysende tilføjelser (`"hvilket er en stor del"`, `"og det er ikke nok til at løse problemet fuldstændigt på nuværende tidspunkt"`)
-- Hægtet-på-led: undgå slutled der ikke tilføjer ny information (`"og det ville være meget problematisk for rejsende"`)
-
-### Foretrukne ord og konstruktioner
-- `overvåge` (ikke `monitorere`)
-- `fortsætte` / `vedblive` (ikke `persistere`)
-- `gennem` (ikke `igennem` i standardkontekster)
-- `jetbrændstof` som sammensætning (ikke `jet fuel` adskilt)
-- `konflikten` frem for `krigen` ved ikke-erklærede krige (stilistisk valg i nyhedssammenhæng)
-
----
-
-## 7. Kildeattribution
+## 6. Kildeattribution
 
 - Bureaukilderne nævnes fuldt ud ved første omtale: `nyhedsbureauet AP`, `Reuters`
 - Ekspertkilder introduceres med navn + institution + kontekst: `Amaar Khan, der følger markedet for flybrændstof i analysehuset Argus Media`
@@ -128,7 +106,7 @@ Mønsteret er altid: `EMNE // GENRE` — aldrig omvendt, aldrig uden dobbeltskr�
 
 ---
 
-## 8. Strukturelle konventioner
+## 7. Strukturelle konventioner
 
 ### Nyhedsartikler (POV Overblik)
 1. Genrekode + fed manchet (2 afsnit)
@@ -154,7 +132,7 @@ Mønsteret er altid: `EMNE // GENRE` — aldrig omvendt, aldrig uden dobbeltskr�
 
 ---
 
-## 9. Metadataformat
+## 8. Metadataformat
 
 - **Dato:** `DD.MM.ÅÅÅÅ` (fx `17.04.2026`)
 - **Kategori:** vises som `[Primærkategori]·[Sekundærkategori]`
@@ -163,7 +141,7 @@ Mønsteret er altid: `EMNE // GENRE` — aldrig omvendt, aldrig uden dobbeltskr�
 
 ---
 
-## 10. Fotocredits
+## 9. Fotocredits
 
 Standard format: `[Beskrivelse]. Foto: [Navn], via [Kilde]`
 Eksempler:
@@ -172,7 +150,7 @@ Eksempler:
 
 ---
 
-## 11. Særligt for korrekturlæseren (LLM-instrukser)
+## 10. Særligt for korrekturlæseren (LLM-instrukser)
 
 Disse regler skal altid overholdes og har højere prioritet end generelle sproglige forbedringer:
 
