@@ -40,15 +40,13 @@ Du må aldrig:
 Når du er i tvivl om noget er en fejl eller et bevidst stilistisk valg, lader du det stå uændret.
 
 Returner kun den rettede tekst uden kommentarer, forklaringer eller indledning.
-Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.`;
-
-// ── Hent stilguide fra GitHub ─────
+Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
 // Returnerer den fulde prompt-streng med stilguide injiceret,
 // eller basis-prompt alene hvis GitHub ikke kan naas.
 // Resultatet caches i sessionStorage saa det kun hentes een gang pr. session.
-const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v4";
+const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v3";
 
 async function buildSystemPrompt() {
     const cached = sessionStorage.getItem(STILGUIDE_CACHE_KEY);
@@ -118,6 +116,22 @@ function initMistralUI() {
     mistralApiKeyInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") saveApiKeyBtn.click();
     });
+}
+
+
+// ── Post-processing ──────────────────────────────────────────────────
+// Retter de to mønstre Mistral konsekvent fejler pga. engelsk træning:
+// 1. Komma inden for anførselstegn → uden for (dansk regel)
+// 2. Rettet anførselstegn → buede anførselstegn (POV's typografi)
+function postProcess(text) {
+    // 1. Komma: ," → ", (og tilsvarende for punktum, spørgsmålstegn, udråbstegn)
+    text = text.replace(/,(”|")/g, '$1,');
+
+    // 2. Rettet anførselstegn → buede (kun hvis ikke allerede buede)
+    // Erstat " der efterfølges af tekst som åbnende anførselstegn
+    text = text.replace(/"([^"]+)"/g, '“$1”');
+
+    return text;
 }
 
 // ── Mistral API-kald ─────────────────────────────────────────────────
@@ -202,7 +216,8 @@ async function autoRedigér() {
                     `Analyserer afsnit ${i + 1} af ${items.length}…`,
                     "info");
 
-                const revisedText = await callMistral(originalText, apiKey, systemPrompt);
+                const rawText = await callMistral(originalText, apiKey, systemPrompt);
+                const revisedText = rawText ? postProcess(rawText) : rawText;
 
                 if (revisedText && revisedText !== originalText) {
                     para.insertText(revisedText, Word.InsertLocation.replace);
