@@ -67,11 +67,11 @@ Mønsteret er altid: `EMNE // GENRE` — aldrig omvendt, aldrig uden dobbeltskr�
 ## 4. Citater og direkte tale
 
 ### Anførselstegn
-- Danske anførselstegn: `"tekst"` (ikke engelske "curly quotes" eller franske guillemets)
+- Anførselstegn: `“tekst”` (buede anførselstegn “ og ” — ikke rettet `"tekst"`, ikke guillemets `»«`)
 - Komma placeres **uden for** det afsluttende anførselstegn: `"tekst",` **ikke** `"tekst,"`
 - Eksempler fra POV's egne artikler:
-  - `"I Europa har vi måske seks uger eller deromkring tilbage af flybrændstof", siger han.`
-  - `"Vi har en mulighed for at nå en historisk fredsaftale med Libanon", sagde han.`
+  - `“I Europa har vi måske seks uger eller deromkring tilbage af flybrændstof”, siger han.`
+  - `“Vi har en mulighed for at nå en historisk fredsaftale med Libanon”, sagde han.`
 
 ### Citatformat
 - Stående citater i brødteksten: ingen kursivering, ingen indrykning
@@ -163,6 +163,7 @@ Disse regler skal altid overholdes:
 5. **Ingen koloner** foran direkte tale, medmindre de allerede er der — POV bruger punktum
 6. **Fed tekst kun i manchetten** — aldrig i brødteksten
 7. **Ændr ikke noget der ligner et bevidst redaktionelt ordvalg** — hvis du er i tvivl, lad det stå uændret
+8. **Brug altid “ og ” som anførselstegn** — aldrig rettet `"tekst"`, aldrig guillemets `»«`
 
 ---
 
