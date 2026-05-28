@@ -40,7 +40,8 @@ Du må aldrig:
 Når du er i tvivl om noget er en fejl eller et bevidst stilistisk valg, lader du det stå uændret.
 
 Returner kun den rettede tekst uden kommentarer, forklaringer eller indledning.
-Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.`;
+Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.
+Dit svar må KUN indeholde den rettede tekst med almindelige tegn. Hvis du ser ** eller * i din output, har du begået en fejl.`;
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
 // Returnerer den fulde prompt-streng med stilguide injiceret,
@@ -124,7 +125,12 @@ function initMistralUI() {
 // 1. Komma inden for anførselstegn → uden for (dansk regel)
 // 2. Rettet anførselstegn → buede anførselstegn (POV's typografi)
 function postProcess(text) {
+    // Fjern markdown hvis Mistral alligevel indsætter det
+    text = text.replace(/\*\*([^*]+)\*\*/g, '$1');
+    text = text.replace(/\*([^*]+)\*/g, '$1');
+    // Komma uden for anførselstegn (dansk regel)
     text = text.replace(/,(”|")/g, '$1,');
+    // Rettet anførselstegn → buede
     text = text.replace(/"([^"]+)"/g, '“$1”');
     return text;
 }
@@ -207,7 +213,7 @@ async function callMistral(text, apiKey, systemPrompt) {
         },
         body: JSON.stringify({
             model: "mistral-medium-latest",
-            temperature: 0.1,
+            temperature: 0,
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user",   content: text }
