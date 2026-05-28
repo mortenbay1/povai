@@ -18,35 +18,40 @@ const STILGUIDE_URL =
 const MISTRAL_KEY_STORAGE = "mistral_api_key";
 
 // ── Basis-prompt (fallback hvis GitHub ikke kan naas) ─────────────────
-    const MISTRAL_BASE_PROMPT = `Du er en erfaren korrekturlæser på det danske nyhedsmedie POV International. Din opgave er udelukkende at rette fejl i den tekst, du modtager — ikke at omskrive den.
+const MISTRAL_BASE_PROMPT = `Du er korrekturlæser på POV International. Du må KUN rette stavefejl, bøjningsfejl og tegnsætning.
+
+ABSOLUT FORBUD — du må aldrig erstatte et ord med et andet:
+- "monitorere" forbliver "monitorere" (ikke "overvåge")
+- "implementere" forbliver "implementere" (ikke "indføre")
+- "fokusere" forbliver "fokusere" (ikke "koncentrere sig om")
+- Selv hvis et andet ord lyder mere dansk eller naturligt: lad det stå.
 
 Tekstens struktur er ukrænkelig:
-- Bevar alle afsnit i deres oprindelige rækkefølge
-- Bevar alle afsnit — slet eller flet ikke afsnit
-- Bevar tekstens længde — du må ikke forkorte eller kondensere indhold
+- Bevar alle afsnit i deres oprindelige rækkefølge og længde
+- Slet, flet eller forkort ikke afsnit
 
 Du retter kun:
-- Stavefejl og slåfejl
-- Forkerte bøjninger og grammatiske fejl (fx forkert køn, tal eller kasus — ikke ordvalg)
-- Manglende eller forkerte tegnsætningstegn
+- Stavefejl og slåfejl (fx "hsue" → "huse")
+- Bøjningsfejl (fx forkert køn, tal, kasus, verbalform)
+- Manglende eller forkert tegnsætning
 
 Du må aldrig:
-- Erstatte et ord med et andet ord, uanset om du mener det er mere naturligt eller korrekt
-- Slette eller omskrive faktuelle oplysninger, tal, stednavne eller personnavne
-- Omformulere sætninger der allerede er korrekte og velfungerende
-- Tilføje indhold der ikke findes i originalen
+- Erstatte et ord med et synonym, uanset hvor "bedre" det lyder
+- Omformulere sætninger der allerede er korrekte
+- Tilføje eller fjerne indhold
 - Ændre genrekoder som "NYHED // OVERBLIK" eller lignende
+- Slette eller omskrive faktuelle oplysninger, tal, stednavne eller personnavne
 
-Når du er i tvivl om noget er en fejl eller et bevidst stilistisk valg, lader du det stå uændret.
+Når du er i tvivl: lad teksten stå uændret.
 
-Returner kun den rettede tekst uden kommentarer, forklaringer eller indledning.
-Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.`;
+Returner kun den rettede tekst — ingen kommentarer, ingen forklaringer, ingen indledning.
+Brug ALDRIG markdown-formatering: ingen **, ingen *, ingen #, ingen -.`;
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
 // Returnerer den fulde prompt-streng med stilguide injiceret,
 // eller basis-prompt alene hvis GitHub ikke kan naas.
 // Resultatet caches i sessionStorage saa det kun hentes een gang pr. session.
-const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v4";
+const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v5";
 
 async function buildSystemPrompt() {
     const cached = sessionStorage.getItem(STILGUIDE_CACHE_KEY);
@@ -120,16 +125,22 @@ function initMistralUI() {
 
 
 // ── Post-processing ──────────────────────────────────────────────────
-// Retter de to mønstre Mistral konsekvent fejler pga. engelsk træning:
-// 1. Komma inden for anførselstegn → uden for (dansk regel)
-// 2. Rettet anførselstegn → buede anførselstegn (POV's typografi)
+// Rydder op i Mistrals output før det skrives til dokumentet:
+// 0. Fjerner markdown-formatering (Mistral indsætter det indimellem trods prompt)
+// 1. Konverterer rettede anførselstegn til buede (POV's typografi)
+// 2. Flytter komma uden for anførselstegn (dansk regel)
 function postProcess(text) {
-    // 1. Komma: ," → ", (og tilsvarende for punktum, spørgsmålstegn, udråbstegn)
-    text = text.replace(/,(”|")/g, '$1,');
+    // 0. Fjern markdown-formatering
+    text = text.replace(/\*\*([^*]+)\*\*/g, '$1');              // **fed** → fed
+    text = text.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1');     // *kursiv* → kursiv
+    text = text.replace(/`([^`]+)`/g, '$1');                    // `kode` → kode
+    text = text.replace(/^#{1,6}\s+/gm, '');                    // # overskrift → overskrift
 
-    // 2. Rettet anførselstegn → buede (kun hvis ikke allerede buede)
-    // Erstat " der efterfølges af tekst som åbnende anførselstegn
+    // 1. Rettet anførselstegn → buede (gør først, så trin 2 kun behøver håndtere buede)
     text = text.replace(/"([^"]+)"/g, '“$1”');
+
+    // 2. Komma uden for anførselstegn (dansk regel)
+    text = text.replace(/,”/g, '”,');
 
     return text;
 }
@@ -144,7 +155,7 @@ async function callMistral(text, apiKey, systemPrompt) {
         },
         body: JSON.stringify({
             model: "mistral-medium-latest",
-            temperature: 0.1,
+            temperature: 0,
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user",   content: text }
