@@ -40,13 +40,13 @@ Du må aldrig:
 Når du er i tvivl om noget er en fejl eller et bevidst stilistisk valg, lader du det stå uændret.
 
 Returner kun den rettede tekst uden kommentarer, forklaringer eller indledning.
-Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.
+Brug ALDRIG markdown-formatering i dit svar — ingen **, ingen *, ingen #, ingen -.`;
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
 // Returnerer den fulde prompt-streng med stilguide injiceret,
 // eller basis-prompt alene hvis GitHub ikke kan naas.
 // Resultatet caches i sessionStorage saa det kun hentes een gang pr. session.
-const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v3";
+const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v4";
 
 async function buildSystemPrompt() {
     const cached = sessionStorage.getItem(STILGUIDE_CACHE_KEY);
