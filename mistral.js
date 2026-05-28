@@ -7,11 +7,12 @@
 // Læser dokumentet afsnitsvis, sender til Mistral API og indsætter
 // rettelser som sporede ændringer direkte i det åbne dokument.
 // API-nøglen gemmes i localStorage på samme måde som WordPress-indstillinger.
+//
+// Word-level diff sikrer at kun de faktisk ændrede ord vises som
+// sporede ændringer — ikke hele afsnittet.
 // =====================================================================
 
 // ── Konfiguration ────────────────────────────────────────────────────
-// Skift denne URL hvis du placerer stilguiden et andet sted i repo'et.
-// Format: https://raw.githubusercontent.com/[bruger]/[repo]/[branch]/[sti]
 const STILGUIDE_URL =
     "https://raw.githubusercontent.com/mortenbay1/povai/main/pov-stilguide.md";
 
@@ -48,9 +49,6 @@ Returner kun den rettede tekst — ingen kommentarer, ingen forklaringer, ingen 
 Brug ALDRIG markdown-formatering: ingen **, ingen *, ingen #, ingen -.`;
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
-// Returnerer den fulde prompt-streng med stilguide injiceret,
-// eller basis-prompt alene hvis GitHub ikke kan naas.
-// Resultatet caches i sessionStorage saa det kun hentes een gang pr. session.
 const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v5";
 
 async function buildSystemPrompt() {
@@ -123,12 +121,7 @@ function initMistralUI() {
     });
 }
 
-
 // ── Post-processing ──────────────────────────────────────────────────
-// Rydder op i Mistrals output før det skrives til dokumentet:
-// 0. Fjerner markdown-formatering (Mistral indsætter det indimellem trods prompt)
-// 1. Konverterer rettede anførselstegn til buede (POV's typografi)
-// 2. Flytter komma uden for anførselstegn (dansk regel)
 function postProcess(text) {
     // 0. Fjern markdown-formatering
     text = text.replace(/\*\*([^*]+)\*\*/g, '$1');              // **fed** → fed
@@ -136,13 +129,167 @@ function postProcess(text) {
     text = text.replace(/`([^`]+)`/g, '$1');                    // `kode` → kode
     text = text.replace(/^#{1,6}\s+/gm, '');                    // # overskrift → overskrift
 
-    // 1. Rettet anførselstegn → buede (gør først, så trin 2 kun behøver håndtere buede)
+    // 1. Rettet anførselstegn → buede
     text = text.replace(/"([^"]+)"/g, '“$1”');
 
     // 2. Komma uden for anførselstegn (dansk regel)
     text = text.replace(/,”/g, '”,');
 
     return text;
+}
+
+// ── Tokenizer ────────────────────────────────────────────────────────
+// Splitter tekst i atomare tokens: hele ord, whitespace, og enkelttegns-
+// tegnsætning. Diff'en arbejder KUN på disse tokens — aldrig delstrenge.
+// Dette forhindrer "mangel"→"dergel"-fælden hvor karakterdiff splitter
+// ord op i mindre dele.
+function tokenize(text) {
+    const re = /(\s+|[.,;:!?"”“„''()\[\]—–\-]|\S+)/g;
+    return text.match(re) || [];
+}
+
+// ── Word-level diff (LCS-baseret) ────────────────────────────────────
+// Returnerer en sekvens af operationer: {op: 'keep'|'delete'|'insert', text}
+function diffTokens(aTokens, bTokens) {
+    const n = aTokens.length;
+    const m = bTokens.length;
+
+    // Byg LCS-tabel
+    const dp = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
+    for (let i = 1; i <= n; i++) {
+        for (let j = 1; j <= m; j++) {
+            if (aTokens[i - 1] === bTokens[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+
+    // Backtrack for at bygge operationssekvensen
+    const ops = [];
+    let i = n, j = m;
+    while (i > 0 && j > 0) {
+        if (aTokens[i - 1] === bTokens[j - 1]) {
+            ops.unshift({ op: 'keep', text: aTokens[i - 1] });
+            i--; j--;
+        } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+            ops.unshift({ op: 'delete', text: aTokens[i - 1] });
+            i--;
+        } else {
+            ops.unshift({ op: 'insert', text: bTokens[j - 1] });
+            j--;
+        }
+    }
+    while (i > 0) ops.unshift({ op: 'delete', text: aTokens[--i] });
+    while (j > 0) ops.unshift({ op: 'insert', text: bTokens[--j] });
+
+    return ops;
+}
+
+// ── Konsolidér diff-operationer ──────────────────────────────────────
+// Slår sammenhængende delete/insert sammen så Word viser fx "mangel" → "der"
+// som ÉN erstatning, ikke flere mikro-ændringer. Delete+insert = replace.
+function consolidateOps(ops) {
+    const result = [];
+    let i = 0;
+    while (i < ops.length) {
+        if (ops[i].op === 'keep') {
+            let text = '';
+            while (i < ops.length && ops[i].op === 'keep') {
+                text += ops[i].text;
+                i++;
+            }
+            result.push({ op: 'keep', text });
+        } else {
+            let deleteText = '';
+            while (i < ops.length && ops[i].op === 'delete') {
+                deleteText += ops[i].text;
+                i++;
+            }
+            let insertText = '';
+            while (i < ops.length && ops[i].op === 'insert') {
+                insertText += ops[i].text;
+                i++;
+            }
+
+            if (deleteText && insertText) {
+                result.push({ op: 'replace', deleteText, insertText });
+            } else if (deleteText) {
+                result.push({ op: 'delete', text: deleteText });
+            } else if (insertText) {
+                result.push({ op: 'insert', text: insertText });
+            }
+        }
+    }
+    return result;
+}
+
+// ── Hjælpefunktion: søg og erstat første forekomst i et afsnit ──────
+async function searchAndReplace(para, searchText, replaceText, context) {
+    if (!searchText || searchText === replaceText) return false;
+
+    try {
+        const searchResults = para.search(searchText, {
+            matchCase: true,
+            matchWholeWord: false
+        });
+        searchResults.load("items");
+        await context.sync();
+
+        if (searchResults.items.length === 0) {
+            console.warn("Kunne ikke finde søgetekst i afsnit:", searchText.slice(0, 50));
+            return false;
+        }
+
+        const range = searchResults.items[0];
+        range.insertText(replaceText, Word.InsertLocation.replace);
+        await context.sync();
+        return true;
+    } catch (err) {
+        console.warn("search/replace fejlede for:", searchText.slice(0, 50), err.message);
+        return false;
+    }
+}
+
+// ── Anvend diff på et afsnit via Word ranges ─────────────────────────
+// Itererer gennem konsoliderede ops. For hver ændring bygges en søgestreng
+// med kontekstanker (tekst lige før/efter) der unikt identificerer
+// positionen, så vi rammer den rigtige forekomst hvis et ord optræder
+// flere gange i afsnittet.
+async function applyDiffToParagraph(para, ops, context) {
+    let anyChanges = false;
+
+    for (let opIdx = 0; opIdx < ops.length; opIdx++) {
+        const op = ops[opIdx];
+        if (op.op === 'keep') continue;
+
+        // Hent kontekst fra omkringliggende keeps som anker
+        const prevKeep = opIdx > 0 && ops[opIdx - 1].op === 'keep' ? ops[opIdx - 1].text : '';
+        const nextKeep = opIdx < ops.length - 1 && ops[opIdx + 1].op === 'keep' ? ops[opIdx + 1].text : '';
+
+        // Tag op til 20 tegn fra hver side
+        const prevAnchor = prevKeep.slice(-20);
+        const nextAnchor = nextKeep.slice(0, 20);
+
+        let searchText, replaceText;
+
+        if (op.op === 'replace') {
+            searchText  = prevAnchor + op.deleteText + nextAnchor;
+            replaceText = prevAnchor + op.insertText + nextAnchor;
+        } else if (op.op === 'delete') {
+            searchText  = prevAnchor + op.text + nextAnchor;
+            replaceText = prevAnchor + nextAnchor;
+        } else if (op.op === 'insert') {
+            searchText  = prevAnchor + nextAnchor;
+            replaceText = prevAnchor + op.text + nextAnchor;
+        }
+
+        const ok = await searchAndReplace(para, searchText, replaceText, context);
+        if (ok) anyChanges = true;
+    }
+
+    return anyChanges;
 }
 
 // ── Mistral API-kald ─────────────────────────────────────────────────
@@ -187,7 +334,6 @@ async function autoRedigér() {
     autoRedigérText.textContent = "Redigerer…";
     setStatus(korrekturStatus, "Henter stilguide…", "info");
 
-    // Byg systemprompt — henter stilguide fra GitHub (eller bruger cache)
     const systemPrompt = await buildSystemPrompt();
 
     try {
@@ -214,7 +360,7 @@ async function autoRedigér() {
                 // Spring tomme og meget korte afsnit over
                 if (!originalText || originalText.length < 15) continue;
 
-                // Spring overskrifter over — de redigeres ikke
+                // Spring overskrifter over
                 const style = para.styleBuiltIn || "";
                 if (
                     style === Word.BuiltInStyleName.heading1 ||
@@ -230,11 +376,37 @@ async function autoRedigér() {
                 const rawText = await callMistral(originalText, apiKey, systemPrompt);
                 const revisedText = rawText ? postProcess(rawText) : rawText;
 
-                if (revisedText && revisedText !== originalText) {
+                if (!revisedText || revisedText === originalText) continue;
+
+                // Word-level diff
+                const aTokens = tokenize(originalText);
+                const bTokens = tokenize(revisedText);
+                const rawOps = diffTokens(aTokens, bTokens);
+                const ops = consolidateOps(rawOps);
+
+                const numChanges = ops.filter(o => o.op !== 'keep').length;
+                if (numChanges === 0) continue;
+
+                // Sikkerhedstjek: hvis mindre end halvdelen af afsnittet
+                // bevares, har Mistral sandsynligvis omskrevet for meget.
+                // Falder tilbage til hel-erstatning så den redigerende
+                // tydeligt kan se at noget er gået galt.
+                const keepLength = ops.filter(o => o.op === 'keep')
+                    .reduce((sum, o) => sum + o.text.length, 0);
+                const tooManyChanges = keepLength < originalText.length * 0.5;
+
+                let success = false;
+                if (!tooManyChanges) {
+                    success = await applyDiffToParagraph(para, ops, context);
+                }
+
+                if (!success) {
+                    // Fallback: erstat hele afsnittet (gammel adfærd)
                     para.insertText(revisedText, Word.InsertLocation.replace);
                     await context.sync();
-                    changed++;
                 }
+
+                changed++;
             }
 
             await context.sync();
