@@ -120,18 +120,81 @@ function initMistralUI() {
 
 
 // ── Post-processing ──────────────────────────────────────────────────
-// Retter de to mønstre Mistral konsekvent fejler pga. engelsk træning:
+// Retter mønstre Mistral konsekvent fejler pga. engelsk træning:
 // 1. Komma inden for anførselstegn → uden for (dansk regel)
 // 2. Rettet anførselstegn → buede anførselstegn (POV's typografi)
 function postProcess(text) {
-    // 1. Komma: ," → ", (og tilsvarende for punktum, spørgsmålstegn, udråbstegn)
     text = text.replace(/,(”|")/g, '$1,');
-
-    // 2. Rettet anførselstegn → buede (kun hvis ikke allerede buede)
-    // Erstat " der efterfølges af tekst som åbnende anførselstegn
     text = text.replace(/"([^"]+)"/g, '“$1”');
-
     return text;
+}
+
+// ── Word-level diff ───────────────────────────────────────────────────
+// Tokeniserer tekst i ord+whitespace og returnerer LCS-baseret diff.
+function tokenize(text) {
+    return text.match(/\S+|\s+/g) || [];
+}
+
+function diffTokens(origTokens, revTokens) {
+    const m = origTokens.length;
+    const n = revTokens.length;
+    const dp = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            dp[i][j] = origTokens[i-1] === revTokens[j-1]
+                ? dp[i-1][j-1] + 1
+                : Math.max(dp[i-1][j], dp[i][j-1]);
+        }
+    }
+    const ops = [];
+    let i = m, j = n;
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && origTokens[i-1] === revTokens[j-1]) {
+            ops.push({ op: 'equal', orig: origTokens[i-1], rev: origTokens[i-1] });
+            i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+            ops.push({ op: 'insert', orig: '', rev: revTokens[j-1] });
+            j--;
+        } else {
+            ops.push({ op: 'delete', orig: origTokens[i-1], rev: '' });
+            i--;
+        }
+    }
+    ops.reverse();
+    // Grupper delete+insert → replace
+    const grouped = [];
+    for (let k = 0; k < ops.length; k++) {
+        if (ops[k].op === 'delete' && k + 1 < ops.length && ops[k+1].op === 'insert') {
+            grouped.push({ op: 'replace', orig: ops[k].orig, rev: ops[k+1].rev });
+            k++;
+        } else {
+            grouped.push(ops[k]);
+        }
+    }
+    return grouped;
+}
+
+// Anvender diff som præcise sporede ændringer i et Word-afsnit.
+async function applyDiffToParagraph(context, para, origText, revisedText) {
+    const ops = diffTokens(tokenize(origText), tokenize(revisedText));
+    let anyChange = false;
+
+    for (const op of ops) {
+        if (op.op === 'equal' || /^\s+$/.test(op.orig || op.rev || '')) continue;
+        anyChange = true;
+
+        if (op.op === 'replace') {
+            const results = para.search(op.orig, { matchCase: true, matchWholeWord: false });
+            results.load('items');
+            await context.sync();
+            if (results.items.length > 0) {
+                results.items[0].insertText(op.rev, Word.InsertLocation.replace);
+                await context.sync();
+            }
+        }
+        // insert/delete logges men ignoreres foreløbig — sjældne ved stavekorrektion
+    }
+    return anyChange;
 }
 
 // ── Mistral API-kald ─────────────────────────────────────────────────
@@ -220,9 +283,9 @@ async function autoRedigér() {
                 const revisedText = rawText ? postProcess(rawText) : rawText;
 
                 if (revisedText && revisedText !== originalText) {
-                    para.insertText(revisedText, Word.InsertLocation.replace);
+                    const hadChanges = await applyDiffToParagraph(context, para, originalText, revisedText);
                     await context.sync();
-                    changed++;
+                    if (hadChanges) changed++;
                 }
             }
 
