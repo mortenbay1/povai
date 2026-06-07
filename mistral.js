@@ -129,12 +129,12 @@ function buildRubrikPrompt(tone, harEksisterendeMellemrubrikker, antalEksisteren
         mellemrubrikInstruks = `Artiklen har INGEN eksisterende mellemrubrikker. Foreslå mellemrubrikker så de bryder teksten op i passende sektioner.
 
 OBLIGATORISK AFSTANDSREGEL:
+- Der SKAL være MINIMUM 5 paragraphs fra dokumentets start (eller hovedrubrikken) til den FØRSTE mellemrubrik — artiklen skal have plads til at etablere sig før første brud
 - Der SKAL være MINIMUM 4 paragraphs mellem to mellemrubrikker
 - Der MÅ MAKSIMUM være 7 paragraphs mellem to mellemrubrikker
-- Reglen gælder også fra dokumentets start til første mellemrubrik
 - Tæl kun brødtekst-paragraphs — hovedrubrikker og eksisterende overskrifter tæller ikke
 
-Eksempel på korrekt afstand: hvis artiklen har 20 brødtekst-paragraphs, vil et godt resultat være mellemrubrikker ved paragraph 5, 11 og 17 (afstande på 5-6-6).
+Eksempel på korrekt afstand: hvis artiklen har 20 brødtekst-paragraphs, vil et godt resultat være mellemrubrikker ved paragraph 6, 12 og 18 (første kommer EFTER paragraph 5, derefter afstande på 6-6).
 
 Hver mellemrubrik skal beskrive det afsnit der følger lige efter den. Du skal angive efter hvilken paragraph-index (0-baseret) hver mellemrubrik skal indsættes.`;
     }
@@ -585,8 +585,9 @@ function erMellemrubrikStyle(styleBuiltIn) {
 // MIN_AFSTAND og MAX_AFSTAND er antal BRØDTEKST-paragraphs imellem, ikke
 // absolutte paragraph-indeks. Vi bruger paragrafTekster til at omregne.
 function filtrerMellemrubrikkerMedAfstand(mellemrubrikker, paragrafTekster) {
-    const MIN_AFSTAND = 4;
-    const MAX_AFSTAND = 7;
+    const MIN_AFSTAND_FRA_START = 5;  // første mellemrubrik må tidligst komme efter 5 brødtekst-paragraphs
+    const MIN_AFSTAND = 4;             // mellem to mellemrubrikker
+    const MAX_AFSTAND = 7;             // maks mellem to mellemrubrikker
 
     // Byg en mapping: paragraph-index → "brødtekst-position"
     // Kun brødtekst (ikke-headings) tæller med i afstandsberegningen
@@ -605,7 +606,10 @@ function filtrerMellemrubrikkerMedAfstand(mellemrubrikker, paragrafTekster) {
         .sort((a, b) => a.efter_paragraph_index - b.efter_paragraph_index);
 
     const accepterede = [];
-    let sidstAccepteretBrødtekstPos = -MIN_AFSTAND; // tillader første mellemrubrik fra start
+    // Brug en sentinel-værdi der gør at første mellemrubrik først tillades
+    // fra brødtekst-position MIN_AFSTAND_FRA_START (dvs. efter mindst 5 brødtekst-paragraphs).
+    // Når accepterede.length === 0, bruger vi MIN_AFSTAND_FRA_START; ellers MIN_AFSTAND.
+    let sidstAccepteretBrødtekstPos = -1;
 
     for (const forslag of sorterede) {
         const paraIdx = forslag.efter_paragraph_index;
@@ -624,15 +628,31 @@ function filtrerMellemrubrikkerMedAfstand(mellemrubrikker, paragrafTekster) {
         }
         if (brødtekstPos === undefined) continue; // ingen brødtekst efter dette punkt
 
-        const afstand = brødtekstPos - sidstAccepteretBrødtekstPos;
-        if (afstand >= MIN_AFSTAND) {
+        // Første mellemrubrik: kræver MIN_AFSTAND_FRA_START fra start (position 0)
+        // Efterfølgende: kræver MIN_AFSTAND fra forrige accepterede
+        let kravOpfyldt;
+        if (accepterede.length === 0) {
+            kravOpfyldt = brødtekstPos >= MIN_AFSTAND_FRA_START;
+            if (!kravOpfyldt) {
+                console.info(
+                    `Filtrerede første mellemrubrik fra (for tæt på start): "${forslag.tekst}" ` +
+                    `ved brødtekst-position ${brødtekstPos} < ${MIN_AFSTAND_FRA_START}`
+                );
+            }
+        } else {
+            const afstand = brødtekstPos - sidstAccepteretBrødtekstPos;
+            kravOpfyldt = afstand >= MIN_AFSTAND;
+            if (!kravOpfyldt) {
+                console.info(
+                    `Filtrerede mellemrubrik fra (for tæt på forrige): "${forslag.tekst}" ` +
+                    `ved paragraph ${paraIdx} — afstand ${afstand} < ${MIN_AFSTAND}`
+                );
+            }
+        }
+
+        if (kravOpfyldt) {
             accepterede.push(forslag);
             sidstAccepteretBrødtekstPos = brødtekstPos;
-        } else {
-            console.info(
-                `Filtrerede mellemrubrik fra (for tæt på forrige): "${forslag.tekst}" ` +
-                `ved paragraph ${paraIdx} — afstand ${afstand} < ${MIN_AFSTAND}`
-            );
         }
     }
 
