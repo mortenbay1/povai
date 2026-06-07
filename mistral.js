@@ -671,6 +671,143 @@ function filtrerMellemrubrikkerMedAfstand(mellemrubrikker, paragrafTekster) {
     return accepterede;
 }
 
+// ── Hale-justering ───────────────────────────────────────────────────
+// Kaldes KUN når der ikke er eksisterende mellemrubrikker.
+// Beslutningstræ:
+//   1. Består halen af flere end 6 paragraphs?
+//      → Nej: gør intet
+//      → Ja: gå til 2
+//   2. Består sektionen før sidste mellemrubrik af 6 paragraphs?
+//      → Ja: gør intet (vi kan ikke optimere uden at bryde min-reglen)
+//      → Nej: gå til 3
+//   3. Er sektionen før sidste mellemrubrik ≤ 5 paragraphs?
+//      → Ja: flyt sidste mellemrubrik ned så sektionen før bliver præcis 6,
+//            og kald Mistral igen for at omformulere mellemrubrikken så den
+//            passer til den nye (kortere) hale-tekst
+async function justérHaleHvisNødvendigt(forslag, paragrafTekster, tone, apiKey) {
+    const MAX_HALE = 6;
+    const MÅL_SEKTION_FØR = 6;
+
+    const mellemrubrikker = forslag.mellemrubrikker || [];
+    if (mellemrubrikker.length === 0) return;
+
+    // Byg brødtekst-positioner (samme logik som i filteret)
+    const brødtekstPositioner = {};
+    const brødtekstParagraphs = []; // [{originalIndex, brødtekstPos, text}, ...]
+    let brødtekstCount = 0;
+    for (const p of paragrafTekster) {
+        if (!p.isHovedrubrik && !p.isMellemrubrik) {
+            brødtekstPositioner[p.index] = brødtekstCount;
+            brødtekstParagraphs.push({
+                originalIndex: p.index,
+                brødtekstPos: brødtekstCount,
+                text: p.text
+            });
+            brødtekstCount++;
+        }
+    }
+
+    const totalBrødtekst = brødtekstCount;
+    const sidsteMellem = mellemrubrikker[mellemrubrikker.length - 1];
+    const sidstePos = brødtekstPositioner[sidsteMellem.efter_paragraph_index];
+    if (sidstePos === undefined) return;
+
+    // Trin 1: Beregn hale-længde
+    const haleLængde = totalBrødtekst - sidstePos - 1;
+    if (haleLængde <= MAX_HALE) {
+        console.info(`Hale OK: ${haleLængde} paragraphs (≤ ${MAX_HALE}).`);
+        return; // intet at gøre
+    }
+
+    // Trin 2: Beregn sektionen før sidste mellemrubrik
+    const næstSidstePos = mellemrubrikker.length > 1
+        ? brødtekstPositioner[mellemrubrikker[mellemrubrikker.length - 2].efter_paragraph_index]
+        : -1; // ingen tidligere mellemrubrik → start af dokumentet
+    const sektionFørLængde = sidstePos - næstSidstePos - 1;
+
+    if (sektionFørLængde === MÅL_SEKTION_FØR) {
+        console.info(
+            `Hale ${haleLængde} paragraphs accepteret — sektion før sidste mellemrubrik ` +
+            `er allerede ${sektionFørLængde}. Kan ikke optimere.`
+        );
+        return;
+    }
+
+    // Trin 3: Er sektionen før ≤ 5? (skulle altid være sandt nu, men vi tjekker)
+    if (sektionFørLængde > 5) {
+        console.warn(
+            `Uventet: sektion før er ${sektionFørLængde} (>5 men ≠ 6). ` +
+            `Springer hale-justering over.`
+        );
+        return;
+    }
+
+    // Flyt sidste mellemrubrik: ny brødtekst-position = næstSidstePos + 1 + 6 = næstSidstePos + 7
+    // (præcis 6 paragraphs i sektionen før, så mellemrubrikken står FØR paragraph nummer 7)
+    const nyBrødtekstPos = næstSidstePos + 1 + MÅL_SEKTION_FØR;
+
+    // Find original paragraph-index for den nye position
+    const nyBrødtekst = brødtekstParagraphs.find(b => b.brødtekstPos === nyBrødtekstPos);
+    if (!nyBrødtekst) {
+        console.warn(`Kunne ikke finde brødtekst på position ${nyBrødtekstPos}.`);
+        return;
+    }
+
+    const gammelPos = sidsteMellem.efter_paragraph_index;
+    const gammelTekst = sidsteMellem.tekst;
+    sidsteMellem.efter_paragraph_index = nyBrødtekst.originalIndex;
+
+    console.info(
+        `Flytter sidste mellemrubrik: paragraph ${gammelPos} → ${nyBrødtekst.originalIndex} ` +
+        `(sektion før: ${sektionFørLængde} → ${MÅL_SEKTION_FØR}, hale: ${haleLængde} → ${totalBrødtekst - nyBrødtekstPos - 1})`
+    );
+
+    // Kald Mistral igen for at omformulere rubrikken så den passer til den nye hale-tekst
+    const haleTekst = brødtekstParagraphs
+        .filter(b => b.brødtekstPos >= nyBrødtekstPos)
+        .map(b => b.text)
+        .join("\n\n");
+
+    if (!haleTekst.trim()) {
+        console.warn("Hale-tekst er tom — beholder oprindelig rubrik.");
+        return;
+    }
+
+    try {
+        const toneBeskrivelse = TONE_BESKRIVELSER[tone] || TONE_BESKRIVELSER.faktuel;
+        const omformuleringsPrompt = `Du er en erfaren redaktør på POV International. Skriv ÉN mellemrubrik der beskriver den tekstsektion du modtager.
+
+${toneBeskrivelse}
+
+KRAV:
+- Maksimum 5 ord
+- Skal indeholde et BØJET UDSAGNSORD (finit verbum) som det centrale element
+- Skal beskrive en handling eller udvikling fra teksten — ikke et tema eller en kategori
+- Må ALDRIG være en ren substantiv-frase (fx "Krigens konsekvenser") — BRUG aktive sætninger (fx "Krigen rammer flytrafikken")
+
+SVARFORMAT:
+Returnér KUN selve mellemrubrikken som ren tekst — ingen anførselstegn, ingen forklaringer, ingen markdown, ingen indledning.`;
+
+        const nyRubrik = await callMistral(haleTekst, apiKey, omformuleringsPrompt, {
+            temperature: 0.4
+        });
+
+        // Ryd op: fjern evt. anførselstegn eller markdown der måtte være sneget sig ind
+        const renset = nyRubrik
+            .replace(/^["“„'`*#\s]+|["”'`*\s]+$/g, "")
+            .trim();
+
+        if (renset && renset.split(/\s+/).length <= 8) {
+            sidsteMellem.tekst = renset;
+            console.info(`Omformuleret: "${gammelTekst}" → "${renset}"`);
+        } else {
+            console.warn(`Omformulering forkastet (for lang eller tom): "${renset}". Beholder original.`);
+        }
+    } catch (err) {
+        console.warn("Omformulering fejlede — beholder oprindelig rubrik:", err.message);
+    }
+}
+
 // Hoved-funktion: foreslå rubrikker
 async function foreslåRubrikker() {
     const apiKey = localStorage.getItem(MISTRAL_KEY_STORAGE);
@@ -788,6 +925,11 @@ async function foreslåRubrikker() {
             if (efter < før) {
                 console.info(`Filter: ${før} → ${efter} mellemrubrikker (afstandsregel)`);
             }
+
+            // Hale-justering: tjek om sidste sektion er for lang, og flyt evt.
+            // sidste mellemrubrik + omformulér via nyt Mistral-kald
+            rubrikText.textContent = "Justerer hale…";
+            await justérHaleHvisNødvendigt(forslag, paragrafTekster, tone, apiKey);
         }
 
         // Trin 4: Indsæt forslagene i dokumentet
