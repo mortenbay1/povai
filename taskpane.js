@@ -316,7 +316,7 @@ async function publish() {
         setStatus(publishStatus, "Error: " + err.message, "error");
     } finally {
         publishBtn.disabled = false;
-        publishText.textContent = "Publish to WordPress";
+        publishText.textContent = "Overfør til WordPress";
     }
 }
 

@@ -37,19 +37,6 @@
                 <span id="autoredigér-text">✦ Auto-redigér</span>
             </button>
             <p id="korrektur-status" class="status-text"></p>
-            <details id="korrektur-settings">
-                <summary>API-nøgle (Mistral)</summary>
-                <div class="input-row" style="margin-top: 8px;">
-                    <input
-                        type="password"
-                        id="mistral-api-key"
-                        placeholder="Indsæt Mistral API-nøgle"
-                        autocomplete="off"
-                    />
-                    <button id="save-api-key-btn" class="btn-secondary">Gem</button>
-                </div>
-                <p id="api-key-status" class="status-text"></p>
-            </details>
         </section>
 
         <section id="rubrik-section">
@@ -66,6 +53,29 @@
                 <span id="rubrik-text">✦ Foreslå rubrikker</span>
             </button>
             <p id="rubrik-status" class="status-text"></p>
+        </section>
+
+        <section id="publish-section">
+            <button id="publish-btn" class="btn-primary" disabled>
+                <span id="publish-text">Overfør til WordPress</span>
+            </button>
+            <p id="publish-status" class="status-text"></p>
+        </section>
+
+        <section id="mistral-key-section">
+            <details id="korrektur-settings">
+                <summary>API-nøgle (Mistral)</summary>
+                <div class="input-row" style="margin-top: 8px;">
+                    <input
+                        type="password"
+                        id="mistral-api-key"
+                        placeholder="Indsæt Mistral API-nøgle"
+                        autocomplete="off"
+                    />
+                    <button id="save-api-key-btn" class="btn-secondary">Gem</button>
+                </div>
+                <p id="api-key-status" class="status-text"></p>
+            </details>
         </section>
 
         <section id="settings-section">
@@ -95,20 +105,13 @@
             <p id="settings-status" class="status-text"></p>
         </section>
 
-        <section id="publish-section">
-            <button id="publish-btn" class="btn-primary" disabled>
-                <span id="publish-text">Publish to WordPress</span>
-            </button>
-            <p id="publish-status" class="status-text"></p>
-        </section>
-
         <section id="info-section">
             <details>
                 <summary>How it works</summary>
                 <ol>
                     <li>In WordPress: <strong>Users → Profile → Application Passwords</strong>. Create a new app password (e.g. "Word Add-in").</li>
                     <li>Enter your WordPress URL, username, and the application password above. Click <strong>Save</strong>.</li>
-                    <li>Click <strong>Publish to WordPress</strong> to create a draft post directly via the REST API.</li>
+                    <li>Click <strong>Overfør til WordPress</strong> to create a draft post directly via the REST API.</li>
                     <li>Use <strong>Update Application Password</strong> when you need to change or rotate your credentials.</li>
                 </ol>
             </details>
@@ -116,7 +119,7 @@
     </div>
 
     <script src="ooxml-to-html.js?v=4"></script>
-    <script src="taskpane.js?v=6"></script>
-    <script src="mistral.js?v=15"></script>
+    <script src="taskpane.js?v=7"></script>
+    <script src="mistral.js?v=16"></script>
 </body>
 </html>
