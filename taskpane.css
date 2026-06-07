@@ -234,3 +234,33 @@ details ol {
 #korrektur-settings summary:hover {
     color: #323130;
 }
+
+/* ── Rubrik-forslag ─────────────────────────────────────────────────── */
+
+#rubrik-section {
+    padding-top: 4px;
+    border-top: 1px solid #edebe9;
+}
+
+.rubrik-select {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #8a8886;
+    border-radius: 4px;
+    outline: none;
+    background: #fff;
+    color: #323130;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    font-family: inherit;
+}
+
+.rubrik-select:focus {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px #0078d4;
+}
+
+.rubrik-select:hover {
+    border-color: #605e5c;
+}

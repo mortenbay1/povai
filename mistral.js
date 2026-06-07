@@ -1,15 +1,14 @@
 /* global Office, Word */
 
 // =====================================================================
-// mistral.js — Auto-redigér med sporede ændringer
+// mistral.js — Auto-redigér + Rubrik-forslag
 // POV International Word Add-in
 //
-// Læser dokumentet afsnitsvis, sender til Mistral API og indsætter
-// rettelser som sporede ændringer direkte i det åbne dokument.
-// API-nøglen gemmes i localStorage på samme måde som WordPress-indstillinger.
-//
-// Word-level diff sikrer at kun de faktisk ændrede ord vises som
-// sporede ændringer — ikke hele afsnittet.
+// To funktioner:
+// 1. Auto-redigér: korrektur via Mistral, indsættes som sporede ændringer
+//    med word-level diff så kun de faktisk ændrede ord markeres.
+// 2. Foreslå rubrikker: hovedrubrik + mellemrubrikker i journalistisk stil,
+//    med valgbar tone (Faktuel, Varm, Humoristisk).
 // =====================================================================
 
 // ── Konfiguration ────────────────────────────────────────────────────
@@ -78,6 +77,75 @@ async function buildSystemPrompt() {
     }
 }
 
+// =====================================================================
+// RUBRIK-FORSLAG — Tone-specifikke prompts
+// =====================================================================
+
+const TONE_BESKRIVELSER = {
+    faktuel: `TONE: FAKTUEL
+- Brug et alvorligt, fagligt og nøgternt journalistisk sprog
+- Hold dig til kendsgerninger og det centrale i artiklen
+- Ingen ordspil, ingen følelsesladet sprog
+- Tænk klassiske avis-rubrikker (Politiken, Berlingske, Information)`,
+
+    varm: `TONE: VARM
+- Brug et empatisk, menneskeligt og indlevende sprog
+- Du må gerne udtrykke følelserne der ligger i artiklen
+- Egnet til livsstil, personportrætter, og emner med menneskelig kerne
+- Tænk magasin- og featurejournalistik`,
+
+    humoristisk: `TONE: HUMORISTISK
+- Brug gerne ordspil, dobbelttydigheder eller let humor
+- Stadig respektfuld over for emnet — humor må aldrig blive på bekostning af artiklens substans
+- Egnet til kulturstof, kommentarer, lette emner
+- Tænk klummeagtig tone`
+};
+
+function buildRubrikPrompt(tone, harEksisterendeMellemrubrikker, antalEksisterendeMellemrubrikker) {
+    const toneBeskrivelse = TONE_BESKRIVELSER[tone] || TONE_BESKRIVELSER.faktuel;
+
+    let mellemrubrikInstruks;
+    if (harEksisterendeMellemrubrikker) {
+        mellemrubrikInstruks = `Artiklen indeholder allerede ${antalEksisterendeMellemrubrikker} mellemrubrik(ker). Du skal foreslå PRÆCIS ${antalEksisterendeMellemrubrikker} nye mellemrubrikker — én pr. eksisterende mellemrubrik, i samme rækkefølge. Hver ny mellemrubrik skal beskrive den samme tekstsektion som den eksisterende mellemrubrik introducerer.`;
+    } else {
+        mellemrubrikInstruks = `Artiklen har INGEN eksisterende mellemrubrikker. Foreslå mellemrubrikker cirka hver 3.-4. paragraph. Hver mellemrubrik skal beskrive det afsnit der følger lige efter den. Du skal angive efter hvilken paragraph-index (0-baseret) hver mellemrubrik skal indsættes.`;
+    }
+
+    return `Du er en erfaren redaktør på det danske nyhedsmedie POV International. Din opgave er at foreslå rubrikker (overskrifter) til den artikel, du modtager.
+
+${toneBeskrivelse}
+
+KRAV TIL HOVEDRUBRIK:
+- Maksimum 15 ord, gerne færre
+- Skal virke inviterende og have blikfang
+- Skal vække nysgerrighed hos læseren
+- Skal afspejle artiklens kerne
+- Journalistisk stil tilpasset den valgte tone
+
+KRAV TIL MELLEMRUBRIKKER:
+- Maksimum 5 ord pr. mellemrubrik
+- Beskriver det afsnit der følger
+- Samme tone som hovedrubrikken
+
+${mellemrubrikInstruks}
+
+SVARFORMAT:
+Du SKAL svare med ren JSON i præcis dette format — intet andet, ingen markdown, ingen indledning:
+
+{
+  "hovedrubrik": "Forslag til hovedrubrik her",
+  "mellemrubrikker": [
+    {"efter_paragraph_index": 2, "tekst": "Mellemrubrik 1"},
+    {"efter_paragraph_index": 5, "tekst": "Mellemrubrik 2"}
+  ]
+}
+
+Hvis der ingen eksisterende mellemrubrikker er: brug efter_paragraph_index til at angive hvor i teksten mellemrubrikken skal indsættes (0-baseret index på den paragraph den skal stå FØR).
+Hvis der ER eksisterende mellemrubrikker: efter_paragraph_index ignoreres — mellemrubrikkerne placeres automatisk over de eksisterende i den rækkefølge du leverer dem.
+
+Returner KUN JSON — ingen forklaringer, ingen markdown-kodeblok, ingen tekst før eller efter.`;
+}
+
 // ── Elementer ────────────────────────────────────────────────────────
 let autoRedigérBtn;
 let autoRedigérText;
@@ -85,6 +153,12 @@ let korrekturStatus;
 let mistralApiKeyInput;
 let saveApiKeyBtn;
 let apiKeyStatus;
+
+// Rubrik-elementer
+let rubrikBtn;
+let rubrikText;
+let rubrikStatus;
+let rubrikToneSelect;
 
 // ── Init — kaldes fra taskpane.js via initMistralUI() ────────────────
 function initMistralUI() {
@@ -95,6 +169,12 @@ function initMistralUI() {
     saveApiKeyBtn      = document.getElementById("save-api-key-btn");
     apiKeyStatus       = document.getElementById("api-key-status");
 
+    // Rubrik-UI
+    rubrikBtn        = document.getElementById("rubrik-btn");
+    rubrikText       = document.getElementById("rubrik-text");
+    rubrikStatus     = document.getElementById("rubrik-status");
+    rubrikToneSelect = document.getElementById("rubrik-tone");
+
     if (!autoRedigérBtn) return;
 
     if (localStorage.getItem(MISTRAL_KEY_STORAGE)) {
@@ -103,6 +183,10 @@ function initMistralUI() {
     }
 
     autoRedigérBtn.addEventListener("click", autoRedigér);
+
+    if (rubrikBtn) {
+        rubrikBtn.addEventListener("click", foreslåRubrikker);
+    }
 
     saveApiKeyBtn.addEventListener("click", () => {
         const key = mistralApiKeyInput.value.trim();
@@ -139,22 +223,16 @@ function postProcess(text) {
 }
 
 // ── Tokenizer ────────────────────────────────────────────────────────
-// Splitter tekst i atomare tokens: hele ord, whitespace, og enkelttegns-
-// tegnsætning. Diff'en arbejder KUN på disse tokens — aldrig delstrenge.
-// Dette forhindrer "mangel"→"dergel"-fælden hvor karakterdiff splitter
-// ord op i mindre dele.
 function tokenize(text) {
     const re = /(\s+|[.,;:!?"”“„''()\[\]—–\-]|\S+)/g;
     return text.match(re) || [];
 }
 
 // ── Word-level diff (LCS-baseret) ────────────────────────────────────
-// Returnerer en sekvens af operationer: {op: 'keep'|'delete'|'insert', text}
 function diffTokens(aTokens, bTokens) {
     const n = aTokens.length;
     const m = bTokens.length;
 
-    // Byg LCS-tabel
     const dp = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
     for (let i = 1; i <= n; i++) {
         for (let j = 1; j <= m; j++) {
@@ -166,7 +244,6 @@ function diffTokens(aTokens, bTokens) {
         }
     }
 
-    // Backtrack for at bygge operationssekvensen
     const ops = [];
     let i = n, j = m;
     while (i > 0 && j > 0) {
@@ -188,8 +265,6 @@ function diffTokens(aTokens, bTokens) {
 }
 
 // ── Konsolidér diff-operationer ──────────────────────────────────────
-// Slår sammenhængende delete/insert sammen så Word viser fx "mangel" → "der"
-// som ÉN erstatning, ikke flere mikro-ændringer. Delete+insert = replace.
 function consolidateOps(ops) {
     const result = [];
     let i = 0;
@@ -253,10 +328,6 @@ async function searchAndReplace(para, searchText, replaceText, context) {
 }
 
 // ── Anvend diff på et afsnit via Word ranges ─────────────────────────
-// Itererer gennem konsoliderede ops. For hver ændring bygges en søgestreng
-// med kontekstanker (tekst lige før/efter) der unikt identificerer
-// positionen, så vi rammer den rigtige forekomst hvis et ord optræder
-// flere gange i afsnittet.
 async function applyDiffToParagraph(para, ops, context) {
     let anyChanges = false;
 
@@ -264,11 +335,9 @@ async function applyDiffToParagraph(para, ops, context) {
         const op = ops[opIdx];
         if (op.op === 'keep') continue;
 
-        // Hent kontekst fra omkringliggende keeps som anker
         const prevKeep = opIdx > 0 && ops[opIdx - 1].op === 'keep' ? ops[opIdx - 1].text : '';
         const nextKeep = opIdx < ops.length - 1 && ops[opIdx + 1].op === 'keep' ? ops[opIdx + 1].text : '';
 
-        // Tag op til 20 tegn fra hver side
         const prevAnchor = prevKeep.slice(-20);
         const nextAnchor = nextKeep.slice(0, 20);
 
@@ -293,21 +362,28 @@ async function applyDiffToParagraph(para, ops, context) {
 }
 
 // ── Mistral API-kald ─────────────────────────────────────────────────
-async function callMistral(text, apiKey, systemPrompt) {
+async function callMistral(text, apiKey, systemPrompt, opts = {}) {
+    const body = {
+        model: opts.model || "mistral-medium-latest",
+        temperature: opts.temperature !== undefined ? opts.temperature : 0,
+        messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user",   content: text }
+        ]
+    };
+
+    // Brug JSON mode hvis ønsket (for rubrik-forslag)
+    if (opts.jsonMode) {
+        body.response_format = { type: "json_object" };
+    }
+
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + apiKey
         },
-        body: JSON.stringify({
-            model: "mistral-medium-latest",
-            temperature: 0,
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user",   content: text }
-            ]
-        })
+        body: JSON.stringify(body)
     });
 
     if (!response.ok) {
@@ -320,7 +396,7 @@ async function callMistral(text, apiKey, systemPrompt) {
     return data.choices[0].message.content.trim();
 }
 
-// ── Hoved-funktion ───────────────────────────────────────────────────
+// ── Hoved-funktion: Auto-redigér ─────────────────────────────────────
 async function autoRedigér() {
     const apiKey = localStorage.getItem(MISTRAL_KEY_STORAGE);
     if (!apiKey) {
@@ -344,7 +420,6 @@ async function autoRedigér() {
 
             const items = paragraphs.items;
 
-            // Aktiver spor ændringer
             context.document.changeTrackingMode = Word.ChangeTrackingMode.trackAll;
             await context.sync();
 
@@ -357,10 +432,8 @@ async function autoRedigér() {
 
                 const originalText = para.text.trim();
 
-                // Spring tomme og meget korte afsnit over
                 if (!originalText || originalText.length < 15) continue;
 
-                // Spring overskrifter over
                 const style = para.styleBuiltIn || "";
                 if (
                     style === Word.BuiltInStyleName.heading1 ||
@@ -378,7 +451,6 @@ async function autoRedigér() {
 
                 if (!revisedText || revisedText === originalText) continue;
 
-                // Word-level diff
                 const aTokens = tokenize(originalText);
                 const bTokens = tokenize(revisedText);
                 const rawOps = diffTokens(aTokens, bTokens);
@@ -387,10 +459,6 @@ async function autoRedigér() {
                 const numChanges = ops.filter(o => o.op !== 'keep').length;
                 if (numChanges === 0) continue;
 
-                // Sikkerhedstjek: hvis mindre end halvdelen af afsnittet
-                // bevares, har Mistral sandsynligvis omskrevet for meget.
-                // Falder tilbage til hel-erstatning så den redigerende
-                // tydeligt kan se at noget er gået galt.
                 const keepLength = ops.filter(o => o.op === 'keep')
                     .reduce((sum, o) => sum + o.text.length, 0);
                 const tooManyChanges = keepLength < originalText.length * 0.5;
@@ -401,7 +469,6 @@ async function autoRedigér() {
                 }
 
                 if (!success) {
-                    // Fallback: erstat hele afsnittet (gammel adfærd)
                     para.insertText(revisedText, Word.InsertLocation.replace);
                     await context.sync();
                 }
@@ -440,6 +507,260 @@ async function autoRedigér() {
         autoRedigérBtn.disabled = false;
         autoRedigérText.textContent = "✦ Auto-redigér";
     }
+}
+
+// =====================================================================
+// RUBRIK-FORSLAG
+// =====================================================================
+
+// Hjælpefunktion: er denne style en hovedrubrik (Heading 1 eller Title)?
+function erHovedrubrikStyle(styleBuiltIn) {
+    return styleBuiltIn === Word.BuiltInStyleName.heading1 ||
+           styleBuiltIn === Word.BuiltInStyleName.title;
+}
+
+// Hjælpefunktion: er denne style en mellemrubrik (Heading 2 eller 3)?
+function erMellemrubrikStyle(styleBuiltIn) {
+    return styleBuiltIn === Word.BuiltInStyleName.heading2 ||
+           styleBuiltIn === Word.BuiltInStyleName.heading3;
+}
+
+// Hoved-funktion: foreslå rubrikker
+async function foreslåRubrikker() {
+    const apiKey = localStorage.getItem(MISTRAL_KEY_STORAGE);
+    if (!apiKey) {
+        setStatus(rubrikStatus,
+            "Ingen API-nøgle. Åbn 'API-nøgle (Mistral)' under Auto-redigér og gem din nøgle.",
+            "error");
+        return;
+    }
+
+    const tone = rubrikToneSelect ? rubrikToneSelect.value : "faktuel";
+
+    rubrikBtn.disabled = true;
+    rubrikText.textContent = "Læser artiklen…";
+    setStatus(rubrikStatus, "", "info");
+
+    try {
+        // Trin 1: Læs dokumentet og kortlæg eksisterende rubrikker
+        let dokumentTekst = "";
+        let eksisterendeHovedrubrik = null;  // {paraIndex, text}
+        let eksisterendeMellemrubrikker = []; // [{paraIndex, text}, ...]
+        let paragrafTekster = [];             // [{index, text, isHeading}, ...]
+
+        await Word.run(async (context) => {
+            const paragraphs = context.document.body.paragraphs;
+            paragraphs.load("items");
+            await context.sync();
+
+            const items = paragraphs.items;
+            for (let i = 0; i < items.length; i++) {
+                items[i].load("text, styleBuiltIn");
+            }
+            await context.sync();
+
+            for (let i = 0; i < items.length; i++) {
+                const para = items[i];
+                const text = para.text.trim();
+                const style = para.styleBuiltIn || "";
+
+                if (!text) continue;
+
+                const isHovedrubrik = erHovedrubrikStyle(style);
+                const isMellemrubrik = erMellemrubrikStyle(style);
+
+                paragrafTekster.push({
+                    index: i,
+                    text: text,
+                    isHovedrubrik: isHovedrubrik,
+                    isMellemrubrik: isMellemrubrik
+                });
+
+                if (isHovedrubrik && !eksisterendeHovedrubrik) {
+                    eksisterendeHovedrubrik = { paraIndex: i, text: text };
+                } else if (isMellemrubrik) {
+                    eksisterendeMellemrubrikker.push({ paraIndex: i, text: text });
+                }
+            }
+        });
+
+        if (paragrafTekster.length === 0) {
+            setStatus(rubrikStatus, "Dokumentet er tomt.", "error");
+            return;
+        }
+
+        // Byg artikelteksten der sendes til Mistral, med paragraph-indeks som
+        // anker så modellen kan referere til positioner præcist
+        dokumentTekst = paragrafTekster.map((p, idx) => {
+            let prefix = `[Paragraph ${idx}]`;
+            if (p.isHovedrubrik) prefix += " (HOVEDRUBRIK)";
+            else if (p.isMellemrubrik) prefix += " (MELLEMRUBRIK)";
+            return `${prefix}: ${p.text}`;
+        }).join("\n\n");
+
+        // Trin 2: Byg prompt og kald Mistral
+        rubrikText.textContent = "Genererer forslag…";
+        setStatus(rubrikStatus, `Mistral genererer rubrikker (tone: ${tone})…`, "info");
+
+        const harEksisterendeMellemrubrikker = eksisterendeMellemrubrikker.length > 0;
+        const prompt = buildRubrikPrompt(
+            tone,
+            harEksisterendeMellemrubrikker,
+            eksisterendeMellemrubrikker.length
+        );
+
+        const rawResponse = await callMistral(dokumentTekst, apiKey, prompt, {
+            jsonMode: true,
+            temperature: 0.4  // lidt kreativitet til rubrikker
+        });
+
+        // Trin 3: Parse JSON-svaret
+        let forslag;
+        try {
+            // Fjern evt. markdown-kodeblokke
+            const cleaned = rawResponse.replace(/```json\s*|\s*```/g, "").trim();
+            forslag = JSON.parse(cleaned);
+        } catch (parseErr) {
+            console.error("Kunne ikke parse Mistral-svar som JSON:", rawResponse);
+            throw new Error("Mistral returnerede ugyldigt format. Prøv igen.");
+        }
+
+        if (!forslag.hovedrubrik) {
+            throw new Error("Intet hovedrubrik-forslag modtaget.");
+        }
+
+        // Trin 4: Indsæt forslagene i dokumentet
+        rubrikText.textContent = "Indsætter forslag…";
+        await indsætRubrikker(
+            forslag,
+            eksisterendeHovedrubrik,
+            eksisterendeMellemrubrikker,
+            paragrafTekster
+        );
+
+        const antalMellem = forslag.mellemrubrikker ? forslag.mellemrubrikker.length : 0;
+        setStatus(rubrikStatus,
+            `✓ Forslag indsat: 1 hovedrubrik + ${antalMellem} mellemrubrik(ker). Gennemgå med Acceptér/Afvis.`,
+            "success");
+
+    } catch (err) {
+        console.error("Rubrik-forslag fejl:", err);
+        const msg = err.message || "";
+        if (msg.includes("401")) {
+            setStatus(rubrikStatus,
+                "Ugyldig API-nøgle. Tjek nøglen under 'API-nøgle (Mistral)'.",
+                "error");
+        } else if (msg.includes("429")) {
+            setStatus(rubrikStatus,
+                "Rate limit nået. Vent et øjeblik og prøv igen.",
+                "error");
+        } else {
+            setStatus(rubrikStatus, "Fejl: " + msg, "error");
+        }
+    } finally {
+        rubrikBtn.disabled = false;
+        rubrikText.textContent = "✦ Foreslå rubrikker";
+    }
+}
+
+// ── Indsæt rubrikker i dokumentet som sporede ændringer ──────────────
+async function indsætRubrikker(forslag, eksisterendeHovedrubrik, eksisterendeMellemrubrikker, paragrafTekster) {
+    await Word.run(async (context) => {
+        // Aktiver tracked changes så indsættelserne markeres
+        context.document.changeTrackingMode = Word.ChangeTrackingMode.trackAll;
+        await context.sync();
+
+        const paragraphs = context.document.body.paragraphs;
+        paragraphs.load("items");
+        await context.sync();
+        const items = paragraphs.items;
+
+        // ── Mellemrubrikker først (fra slutningen og bagud, så indeks ikke flytter sig) ──
+        const mellemrubrikker = forslag.mellemrubrikker || [];
+
+        if (eksisterendeMellemrubrikker.length > 0) {
+            // Eksisterende mellemrubrikker findes — placer forslag OVER hver af dem.
+            // Vi går baglæns så vi ikke forstyrrer paragraph-indeks for ikke-behandlede.
+            const antal = Math.min(mellemrubrikker.length, eksisterendeMellemrubrikker.length);
+            for (let k = antal - 1; k >= 0; k--) {
+                const eksisterende = eksisterendeMellemrubrikker[k];
+                const nyTekst = mellemrubrikker[k].tekst;
+                const targetPara = items[eksisterende.paraIndex];
+                if (!targetPara) continue;
+
+                // Indsæt nyt paragraph FØR eksisterende mellemrubrik
+                const newPara = targetPara.insertParagraph(nyTekst, Word.InsertLocation.before);
+                newPara.styleBuiltIn = Word.BuiltInStyleName.heading2;
+                await context.sync();
+            }
+        } else {
+            // Ingen eksisterende mellemrubrikker — brug efter_paragraph_index fra Mistral.
+            // Sortér descending så vi indsætter bagfra og bevarer indekserne.
+            const sortedMellem = [...mellemrubrikker]
+                .filter(m => typeof m.efter_paragraph_index === "number")
+                .sort((a, b) => b.efter_paragraph_index - a.efter_paragraph_index);
+
+            for (const m of sortedMellem) {
+                const targetPara = items[m.efter_paragraph_index];
+                if (!targetPara) continue;
+
+                // Vi indsætter FØR den paragraph mellemrubrikken skal beskrive
+                const newPara = targetPara.insertParagraph(m.tekst, Word.InsertLocation.before);
+                newPara.styleBuiltIn = Word.BuiltInStyleName.heading2;
+                await context.sync();
+            }
+        }
+
+        // ── Hovedrubrik til sidst (indeks kan have flyttet sig, men vi placerer enten
+        // over eksisterende eller helt øverst, så det er ok) ──
+        const hovedrubrikTekst = forslag.hovedrubrik;
+
+        // Genindlæs paragraphs for at få aktuel state
+        const refreshedParagraphs = context.document.body.paragraphs;
+        refreshedParagraphs.load("items");
+        await context.sync();
+        const refreshedItems = refreshedParagraphs.items;
+
+        if (eksisterendeHovedrubrik && refreshedItems.length > 0) {
+            // Find igen den eksisterende hovedrubrik via tekst-match
+            // (paraIndex kan have ændret sig pga. mellemrubrik-indsættelser)
+            let targetIdx = -1;
+            for (let i = 0; i < refreshedItems.length; i++) {
+                refreshedItems[i].load("text, styleBuiltIn");
+            }
+            await context.sync();
+
+            for (let i = 0; i < refreshedItems.length; i++) {
+                const p = refreshedItems[i];
+                if (erHovedrubrikStyle(p.styleBuiltIn) &&
+                    p.text.trim() === eksisterendeHovedrubrik.text) {
+                    targetIdx = i;
+                    break;
+                }
+            }
+
+            if (targetIdx >= 0) {
+                const targetPara = refreshedItems[targetIdx];
+                const newPara = targetPara.insertParagraph(hovedrubrikTekst, Word.InsertLocation.before);
+                newPara.styleBuiltIn = Word.BuiltInStyleName.heading1;
+                await context.sync();
+            } else {
+                // Fallback: indsæt øverst i dokumentet
+                const firstPara = refreshedItems[0];
+                const newPara = firstPara.insertParagraph(hovedrubrikTekst, Word.InsertLocation.before);
+                newPara.styleBuiltIn = Word.BuiltInStyleName.heading1;
+                await context.sync();
+            }
+        } else if (refreshedItems.length > 0) {
+            // Ingen eksisterende hovedrubrik — indsæt øverst
+            const firstPara = refreshedItems[0];
+            const newPara = firstPara.insertParagraph(hovedrubrikTekst, Word.InsertLocation.before);
+            newPara.styleBuiltIn = Word.BuiltInStyleName.heading1;
+            await context.sync();
+        }
+
+        await context.sync();
+    });
 }
 
 // ── Genbruger setStatus fra taskpane.js (tilgængelig globalt) ────────

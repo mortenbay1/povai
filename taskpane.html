@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Publish to WordPress</title>
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-    <link rel="stylesheet" href="taskpane.css?v=5" />
+    <link rel="stylesheet" href="taskpane.css?v=6" />
 </head>
 <body>
     <div id="app">
@@ -50,6 +50,22 @@
                 </div>
                 <p id="api-key-status" class="status-text"></p>
             </details>
+        </section>
+
+        <section id="rubrik-section">
+            <label>Foreslå rubrikker</label>
+            <p class="format-hint">Mistral foreslår hovedrubrik og mellemrubrikker. Indsættes som sporede ændringer.</p>
+            <div class="input-row" style="margin-bottom: 8px;">
+                <select id="rubrik-tone" class="rubrik-select">
+                    <option value="faktuel" selected>Faktuel</option>
+                    <option value="varm">Varm</option>
+                    <option value="humoristisk">Humoristisk</option>
+                </select>
+            </div>
+            <button type="button" id="rubrik-btn" class="btn-korrektur">
+                <span id="rubrik-text">✦ Foreslå rubrikker</span>
+            </button>
+            <p id="rubrik-status" class="status-text"></p>
         </section>
 
         <section id="settings-section">
@@ -100,7 +116,7 @@
     </div>
 
     <script src="ooxml-to-html.js?v=4"></script>
-    <script src="taskpane.js?v=5"></script>
-    <script src="mistral.js?v=12"></script>
+    <script src="taskpane.js?v=6"></script>
+    <script src="mistral.js?v=13"></script>
 </body>
 </html>
