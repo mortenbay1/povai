@@ -131,10 +131,10 @@ function buildRubrikPrompt(tone, harEksisterendeMellemrubrikker, antalEksisteren
 OBLIGATORISK AFSTANDSREGEL:
 - Der SKAL være MINIMUM 5 paragraphs fra dokumentets start (eller hovedrubrikken) til den FØRSTE mellemrubrik — artiklen skal have plads til at etablere sig før første brud
 - Der SKAL være MINIMUM 4 paragraphs mellem to mellemrubrikker
-- Der MÅ MAKSIMUM være 7 paragraphs mellem to mellemrubrikker
+- Der MÅ MAKSIMUM være 6 paragraphs mellem to mellemrubrikker
 - Tæl kun brødtekst-paragraphs — hovedrubrikker og eksisterende overskrifter tæller ikke
 
-Eksempel på korrekt afstand: hvis artiklen har 20 brødtekst-paragraphs, vil et godt resultat være mellemrubrikker ved paragraph 6, 12 og 18 (første kommer EFTER paragraph 5, derefter afstande på 6-6).
+Eksempel på korrekt afstand: hvis artiklen har 20 brødtekst-paragraphs, vil et godt resultat være mellemrubrikker ved paragraph 6, 12 og 18 (første kommer EFTER paragraph 5, derefter afstande på 5-6).
 
 Hver mellemrubrik skal beskrive det afsnit der følger lige efter den. Du skal angive efter hvilken paragraph-index (0-baseret) hver mellemrubrik skal indsættes.`;
     }
@@ -587,7 +587,7 @@ function erMellemrubrikStyle(styleBuiltIn) {
 function filtrerMellemrubrikkerMedAfstand(mellemrubrikker, paragrafTekster) {
     const MIN_AFSTAND_FRA_START = 5;  // første mellemrubrik må tidligst komme efter 5 brødtekst-paragraphs
     const MIN_AFSTAND = 4;             // mellem to mellemrubrikker
-    const MAX_AFSTAND = 7;             // maks mellem to mellemrubrikker
+    const MAX_AFSTAND = 6;             // maks mellem to mellemrubrikker
 
     // Byg en mapping: paragraph-index → "brødtekst-position"
     // Kun brødtekst (ikke-headings) tæller med i afstandsberegningen
