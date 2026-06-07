@@ -86,19 +86,37 @@ const TONE_BESKRIVELSER = {
 - Brug et alvorligt, fagligt og nøgternt journalistisk sprog
 - Hold dig til kendsgerninger og det centrale i artiklen
 - Ingen ordspil, ingen følelsesladet sprog
-- Tænk klassiske avis-rubrikker (Politiken, Berlingske, Information)`,
+- Tænk klassiske avis-rubrikker (Politiken, Berlingske, Information)
+
+Eksempler på faktuelle MELLEMRUBRIKKER med aktive verber:
+- "Birol advarer mod brændstofkrise"
+- "EU forbereder nødplan"
+- "Lufthavne aflyser hundredvis af afgange"
+- "Priserne stiger hurtigt"`,
 
     varm: `TONE: VARM
 - Brug et empatisk, menneskeligt og indlevende sprog
 - Du må gerne udtrykke følelserne der ligger i artiklen
 - Egnet til livsstil, personportrætter, og emner med menneskelig kerne
-- Tænk magasin- og featurejournalistik`,
+- Tænk magasin- og featurejournalistik
+
+Eksempler på varme MELLEMRUBRIKKER med aktive verber:
+- "Familien venter stadig på svar"
+- "Hun finder ro i haven"
+- "Naboer rækker hånden frem"
+- "Drømmen vokser hver dag"`,
 
     humoristisk: `TONE: HUMORISTISK
 - Brug gerne ordspil, dobbelttydigheder eller let humor
 - Stadig respektfuld over for emnet — humor må aldrig blive på bekostning af artiklens substans
 - Egnet til kulturstof, kommentarer, lette emner
-- Tænk klummeagtig tone`
+- Tænk klummeagtig tone
+
+Eksempler på humoristiske MELLEMRUBRIKKER med aktive verber:
+- "Brændstoffet damper væk"
+- "EU-Kommissionen sveder over kortet"
+- "Flyene står stille — og stille"
+- "Sommerferien går i stå"`
 };
 
 function buildRubrikPrompt(tone, harEksisterendeMellemrubrikker, antalEksisterendeMellemrubrikker) {
@@ -134,8 +152,27 @@ KRAV TIL HOVEDRUBRIK:
 
 KRAV TIL MELLEMRUBRIKKER:
 - Maksimum 5 ord pr. mellemrubrik
-- Beskriver det afsnit der følger
+- Skal indeholde et BØJET UDSAGNSORD (finit verbum) som det centrale element
+- Skal beskrive en HANDLING eller UDVIKLING fra det følgende afsnit — ikke et tema eller en kategori
 - Samme tone som hovedrubrikken
+
+KRITISK — undgå "liste-agtige" mellemrubrikker:
+Mellemrubrikker må IKKE være rene substantiv-fraser der fungerer som indholdsfortegnelse.
+De skal læses som mini-overskrifter med et tydeligt subjekt og verbum.
+
+UNDGÅ (substantiv-fraser, virker som kategorier):
+- "Krigens konsekvenser"
+- "Mellemøstlige spændinger"
+- "Den økonomiske påvirkning"
+- "Birol og IEA's advarsel"
+
+BRUG (aktive sætninger med bøjet udsagnsord):
+- "Krigen rammer flytrafikken"
+- "Spændingen vokser i Mellemøsten"
+- "Økonomien mærker konsekvenserne"
+- "Birol advarer EU-ledere"
+
+Tommelfingerregel: hvis du kan sætte "om" foran din mellemrubrik og den giver mening som indholdsfortegnelse-punkt ("om krigens konsekvenser"), så er den for passiv. Lav den om så den indeholder et bøjet verbum.
 
 ${mellemrubrikInstruks}
 
