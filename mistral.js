@@ -108,7 +108,17 @@ function buildRubrikPrompt(tone, harEksisterendeMellemrubrikker, antalEksisteren
     if (harEksisterendeMellemrubrikker) {
         mellemrubrikInstruks = `Artiklen indeholder allerede ${antalEksisterendeMellemrubrikker} mellemrubrik(ker). Du skal foreslå PRÆCIS ${antalEksisterendeMellemrubrikker} nye mellemrubrikker — én pr. eksisterende mellemrubrik, i samme rækkefølge. Hver ny mellemrubrik skal beskrive den samme tekstsektion som den eksisterende mellemrubrik introducerer.`;
     } else {
-        mellemrubrikInstruks = `Artiklen har INGEN eksisterende mellemrubrikker. Foreslå mellemrubrikker cirka hver 3.-4. paragraph. Hver mellemrubrik skal beskrive det afsnit der følger lige efter den. Du skal angive efter hvilken paragraph-index (0-baseret) hver mellemrubrik skal indsættes.`;
+        mellemrubrikInstruks = `Artiklen har INGEN eksisterende mellemrubrikker. Foreslå mellemrubrikker så de bryder teksten op i passende sektioner.
+
+OBLIGATORISK AFSTANDSREGEL:
+- Der SKAL være MINIMUM 4 paragraphs mellem to mellemrubrikker
+- Der MÅ MAKSIMUM være 7 paragraphs mellem to mellemrubrikker
+- Reglen gælder også fra dokumentets start til første mellemrubrik
+- Tæl kun brødtekst-paragraphs — hovedrubrikker og eksisterende overskrifter tæller ikke
+
+Eksempel på korrekt afstand: hvis artiklen har 20 brødtekst-paragraphs, vil et godt resultat være mellemrubrikker ved paragraph 5, 11 og 17 (afstande på 5-6-6).
+
+Hver mellemrubrik skal beskrive det afsnit der følger lige efter den. Du skal angive efter hvilken paragraph-index (0-baseret) hver mellemrubrik skal indsættes.`;
     }
 
     return `Du er en erfaren redaktør på det danske nyhedsmedie POV International. Din opgave er at foreslå rubrikker (overskrifter) til den artikel, du modtager.
@@ -525,6 +535,85 @@ function erMellemrubrikStyle(styleBuiltIn) {
            styleBuiltIn === Word.BuiltInStyleName.heading3;
 }
 
+// Filtrer mellemrubrikker så afstandsreglen (min 4, max 7 paragraphs) overholdes.
+// Kaldes KUN når der ikke er eksisterende mellemrubrikker — så har Mistral selv
+// valgt placeringerne, og vi skal validere dem.
+//
+// Strategi:
+// 1. Sortér Mistrals forslag efter paragraph-index
+// 2. Filtrer dem der ligger for tæt (< 4) på den forrige accepterede
+// 3. Hvis hul > 7 mellem to accepterede, kan vi ikke selv lave nye mellemrubrikker
+//    (vi har ingen tekst at basere dem på), men vi advarer i konsollen
+//
+// MIN_AFSTAND og MAX_AFSTAND er antal BRØDTEKST-paragraphs imellem, ikke
+// absolutte paragraph-indeks. Vi bruger paragrafTekster til at omregne.
+function filtrerMellemrubrikkerMedAfstand(mellemrubrikker, paragrafTekster) {
+    const MIN_AFSTAND = 4;
+    const MAX_AFSTAND = 7;
+
+    // Byg en mapping: paragraph-index → "brødtekst-position"
+    // Kun brødtekst (ikke-headings) tæller med i afstandsberegningen
+    const brødtekstPositioner = {};
+    let brødtekstCount = 0;
+    for (const p of paragrafTekster) {
+        if (!p.isHovedrubrik && !p.isMellemrubrik) {
+            brødtekstPositioner[p.index] = brødtekstCount;
+            brødtekstCount++;
+        }
+    }
+
+    // Sortér forslag efter paragraph-index
+    const sorterede = [...mellemrubrikker]
+        .filter(m => typeof m.efter_paragraph_index === "number")
+        .sort((a, b) => a.efter_paragraph_index - b.efter_paragraph_index);
+
+    const accepterede = [];
+    let sidstAccepteretBrødtekstPos = -MIN_AFSTAND; // tillader første mellemrubrik fra start
+
+    for (const forslag of sorterede) {
+        const paraIdx = forslag.efter_paragraph_index;
+
+        // Find brødtekst-positionen for denne paragraph
+        // (Hvis paragraphen ikke er brødtekst, find nærmeste følgende brødtekst)
+        let brødtekstPos = brødtekstPositioner[paraIdx];
+        if (brødtekstPos === undefined) {
+            // Mistral peger på en heading-paragraph — find næste brødtekst
+            for (const p of paragrafTekster) {
+                if (p.index >= paraIdx && !p.isHovedrubrik && !p.isMellemrubrik) {
+                    brødtekstPos = brødtekstPositioner[p.index];
+                    break;
+                }
+            }
+        }
+        if (brødtekstPos === undefined) continue; // ingen brødtekst efter dette punkt
+
+        const afstand = brødtekstPos - sidstAccepteretBrødtekstPos;
+        if (afstand >= MIN_AFSTAND) {
+            accepterede.push(forslag);
+            sidstAccepteretBrødtekstPos = brødtekstPos;
+        } else {
+            console.info(
+                `Filtrerede mellemrubrik fra (for tæt på forrige): "${forslag.tekst}" ` +
+                `ved paragraph ${paraIdx} — afstand ${afstand} < ${MIN_AFSTAND}`
+            );
+        }
+    }
+
+    // Tjek for huller > MAX_AFSTAND og log det (vi kan ikke selv generere ny tekst)
+    for (let i = 0; i < accepterede.length - 1; i++) {
+        const a = brødtekstPositioner[accepterede[i].efter_paragraph_index];
+        const b = brødtekstPositioner[accepterede[i + 1].efter_paragraph_index];
+        if (a !== undefined && b !== undefined && (b - a) > MAX_AFSTAND) {
+            console.warn(
+                `Hul mellem mellemrubrikker er ${b - a} paragraphs ` +
+                `(maks. ${MAX_AFSTAND}) — Mistral har ikke foreslået nok mellemrubrikker.`
+            );
+        }
+    }
+
+    return accepterede;
+}
+
 // Hoved-funktion: foreslå rubrikker
 async function foreslåRubrikker() {
     const apiKey = localStorage.getItem(MISTRAL_KEY_STORAGE);
@@ -627,6 +716,21 @@ async function foreslåRubrikker() {
 
         if (!forslag.hovedrubrik) {
             throw new Error("Intet hovedrubrik-forslag modtaget.");
+        }
+
+        // Hvis der ikke er eksisterende mellemrubrikker: håndhæv 4-7 afstandsregel
+        // (Hvis der ER eksisterende, er antallet bundet og placeringen givet — så
+        // springer vi filteret over.)
+        if (!harEksisterendeMellemrubrikker && forslag.mellemrubrikker) {
+            const før = forslag.mellemrubrikker.length;
+            forslag.mellemrubrikker = filtrerMellemrubrikkerMedAfstand(
+                forslag.mellemrubrikker,
+                paragrafTekster
+            );
+            const efter = forslag.mellemrubrikker.length;
+            if (efter < før) {
+                console.info(`Filter: ${før} → ${efter} mellemrubrikker (afstandsregel)`);
+            }
         }
 
         // Trin 4: Indsæt forslagene i dokumentet
