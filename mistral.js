@@ -88,13 +88,21 @@ const TONE_BESKRIVELSER = {
 - Ingen ordspil, ingen følelsesladet sprog
 - Tænk klassiske avis-rubrikker (Politiken, Berlingske, Information)
 
-Eksempler på faktuelle HOVEDRUBRIKKER (op til 15 ord, fyldige nok til at give kontekst):
+POV-stilen er distinkt og bør efterlignes:
+- Brug ofte to-sætningsformat med punktum imellem — første sætning siger HVAD, anden sætning siger NUANCE eller KONSEKVENS
+- Konkrete navne (personer, lande, institutioner) i forgrunden frem for abstrakte termer
+- "Men"-konstruktioner der indfører nuance er typiske
+- Undgå generiske rubrikker — gå efter den specifikke vinkel artiklen har
+
+Eksempler på faktuelle POV-HOVEDRUBRIKKER (efterlign denne stil tæt):
+To sætninger (foretrukket POV-stil):
+- "EU åbner døren for Ukraine. Men den står ikke på vid gab"
+- "Voldelige kampe i Mogadishu. Oppositionen vil have direkte valg af politikere"
+- "Brud med Trump: Kongressen vedtager hjælp til Ukraine. Zelenskyj skriver brev til Putin"
+- "Magtkampe om arvefølgen kan blive gift for Peter Hummelgaard. Og for den økonomiske politik"
 Én sætning:
-- "Brændstofkrise truer europæisk luftfart efter lukning af Hormuzstrædet"
-- "IEA-direktør advarer EU om akut mangel på flybrændstof inden sommerferien"
-To sætninger:
-- "Hormuzstrædet er lukket. Nu står Europas luftfart over for en akut brændstofkrise"
-- "Lagrene tømmes hurtigt. Birol advarer om aflyste afgange allerede i juni"
+- "Danmarks 177. grundlovsdag: Demokrati er det muliges kunst, mener SF's leder"
+- "Frankrig: Det yderste højre kan komme til magten med støtte fra magtfulde erhvervsfolk"
 
 Eksempler på faktuelle MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - "Birol advarer mod brændstofkrise"
@@ -108,13 +116,20 @@ Eksempler på faktuelle MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - Egnet til livsstil, personportrætter, og emner med menneskelig kerne
 - Tænk magasin- og featurejournalistik
 
-Eksempler på varme HOVEDRUBRIKKER (op til 15 ord, fyldige nok til at give kontekst):
+POV's varme rubrikker har en særlig kvalitet:
+- Personen eller skæbnen i centrum, gerne navngivet
+- Konkrete billeder frem for abstrakte følelser
+- Vending eller forvandling som motor: "Hun var X. Nu er hun Y"
+- Korte, præcise punktum-sætninger der lader læseren ane historien bag
+
+Eksempler på varme POV-HOVEDRUBRIKKER (efterlign denne stil tæt):
+To sætninger (foretrukket POV-stil):
+- "Agnes slap aldrig rigtigt fri af Hemingways skygge. Nu spiller hun hovedrollen i Mich Vraas roman"
+- "Ole Nydahl blev Lama Ole, da hans frihedstrang skiftede gear"
+- "Dansen gennem sommeren er slut – mørket har vundet"
 Én sætning:
-- "Hun mistede sin søn — nu bygger hun et fristed for andre forældre i sorg"
-- "Tre generationer i samme køkken og opskriften der binder familien sammen"
-To sætninger:
-- "Hun troede livet var slut. I haven fandt hun en ny begyndelse"
-- "Landsbyen mistede sin købmand. Så åbnede naboerne deres egne døre"
+- "Det er flygtningens splittede erindring taget på kornet"
+- "Gratinen kan bygge bro mellem alle generationer og kulturer"
 
 Eksempler på varme MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - "Familien venter stadig på svar"
@@ -128,13 +143,20 @@ Eksempler på varme MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - Egnet til kulturstof, kommentarer, lette emner
 - Tænk klummeagtig tone
 
-Eksempler på humoristiske HOVEDRUBRIKKER (op til 15 ord, fyldige nok til at give kontekst):
-Én sætning:
+POV's humor er tør og underspillet — aldrig fjollet:
+- Vendinger der overrasker uden at være kunstige
+- Ordspil der har journalistisk substans bagved
+- "Punchline-pause" via punktum mellem to korte sætninger virker stærkt
+- Hvis rubrikken er for åbenlys eller for kæk, virker det forkert i POV's univers
+
+Eksempler på POV-rubrikker med let humor (efterlign denne stil tæt):
+To sætninger (foretrukket POV-stil):
+- "Året, hvor grunge og metal ramte den lige i røven"
+- "De tunge og dem, der kom for at grunge"
+- "Her er, hvad du skal svare folk, der taler grimt til dig"
+Én sætning med spids vinkel:
 - "Når Mellemøsten nyser, får europæiske lufthavne lungebetændelse"
 - "Sommerferien hænger i en tynd tråd — og en endnu tyndere brændstofslange"
-To sætninger:
-- "Hormuzstrædet siger nej tak. Og så pakker sommerferien sin kuffert ud igen"
-- "Flyene stod klar. Brændstoffet glemte at møde op"
 
 Eksempler på humoristiske MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - "Brændstoffet damper væk"
@@ -149,13 +171,20 @@ Eksempler på humoristiske MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - Egnet til essays, portrætter, kulturstof, og artikler der fortjener noget særligt
 - Tænk litterær journalistik, magasin-essays, eller stærke kommentarer
 
-Eksempler på kreative HOVEDRUBRIKKER (op til 15 ord, fyldige nok til at give kontekst):
-Én sætning:
+POV's kreative rubrikker tør gå hele vejen:
+- Stærke billeder der bærer hele rubrikken: "døren står ikke på vid gab", "drømmen er blevet et mareridt"
+- Modsætninger der skaber spænding: lys/mørke, drøm/mareridt, åben/lukket
+- To-sætnings-formatet bruges ofte til at lade billedet lande og så vende det
+- Skribentens stemme må gerne træde tydeligt frem
+
+Eksempler på kreative POV-HOVEDRUBRIKKER (efterlign denne stil tæt):
+To sætninger med stærkt billede:
+- "Anders Redders 'Fort Europa' viser, at drømmen om Europa er blevet et mareridt"
+- "Dansen gennem sommeren er slut – mørket har vundet"
+- "Skønhedskæden og den dystre baggrund bag værkets tilblivelse blev forløst på det allerhøjeste niveau"
+Lyrisk én sætning:
 - "Et stræde lukker, og sommerens drømme falder som dominobrikker over Europa"
 - "Brændstoffet forsvandt — og med det forsvandt også illusionen om en grænseløs verden"
-To sætninger:
-- "Et smalt stræde. Et enormt problem"
-- "Engang fløj vi for at undslippe verden. Nu kan verden ikke længere undslippe os"
 
 Eksempler på kreative MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - "Strædet kvæler kontinentet"
@@ -194,6 +223,22 @@ Hver mellemrubrik skal beskrive det afsnit der følger lige efter den. Du skal a
     }
 
     return `Du er en erfaren redaktør på det danske nyhedsmedie POV International. Din opgave er at foreslå rubrikker (overskrifter) til den artikel, du modtager.
+
+VIGTIGT — POV's stilistiske signatur:
+POV-rubrikker er distinkte og har en særlig karakter, som du SKAL efterligne tæt. Studér eksemplerne nedenfor — de er hentet direkte fra pov.international og repræsenterer den stil, en menneskelig POV-redaktør ville bruge. Tag dig særligt af to-sætnings-formatet (med punktum mellem), navnenævnelser, og POV's karakteristiske brug af "men"/"og"-vendinger der introducerer nuance eller pointe.
+
+Undgå generiske, neutrale rubrikker af typen "Krisen rammer Europa hårdt" eller "Eksperter advarer mod konsekvenser". Sigt i stedet efter den specifikke vinkel og det stærke billede, der gør en POV-rubrik genkendelig.
+
+VIGTIGT — INGEN GENRE-PREFIKS:
+Du må ALDRIG starte rubrikken med genre-koder eller etiketter som:
+- "NYHED // OVERBLIK –"
+- "FRANKRIG // ANALYSE –"
+- "NEKROLOG –"
+- "BØGER // ANMELDELSE –"
+- "POLITIK //"
+- "(1955-2026):"
+- eller lignende kategori-, sektion- eller datoangivelser
+Rubrikken skal starte direkte med selve indholdet. Disse prefikser tilføjes af systemet — ikke af dig.
 
 ${toneBeskrivelse}
 
@@ -865,6 +910,43 @@ Returnér KUN selve mellemrubrikken som ren tekst — ingen anførselstegn, inge
     }
 }
 
+// Fjern genre-prefiks som Mistral måtte have tilføjet i strid med instruksen.
+// Eksempler der fjernes:
+//   "NYHED // OVERBLIK – Resten af rubrikken"  → "Resten af rubrikken"
+//   "FRANKRIG // ANALYSE – Tekst"               → "Tekst"
+//   "NEKROLOG – Tekst"                          → "Tekst"
+//   "BØGER // ANMELDELSE: Tekst"                → "Tekst"
+//   "Bo Green Jensen (1955-2026): Tekst"        → "Tekst"
+function fjernGenrePrefix(rubrik) {
+    if (!rubrik) return rubrik;
+
+    let renset = rubrik.trim();
+
+    // 1. Mønster: STORE BOGSTAVER (evt. med // og flere ord) efterfulgt af tankestreg eller kolon
+    //    fx "NYHED // OVERBLIK – ", "FRANKRIG // ANALYSE: ", "NEKROLOG – "
+    renset = renset.replace(
+        /^[A-ZÆØÅ][A-ZÆØÅ\s/]{1,40}\s*[–—-]\s*/,
+        ""
+    );
+    renset = renset.replace(
+        /^[A-ZÆØÅ][A-ZÆØÅ\s/]{1,40}:\s+/,
+        ""
+    );
+
+    // 2. Mønster: "(årstal-årstal):" eller "(årstal):"
+    //    fx "Bo Green Jensen (1955-2026): "
+    //    Vi fjerner kun selve årstals-parentesen + kolon, så navnet bevares foran
+    renset = renset.replace(
+        /\s*\(\s*\d{4}\s*[-–—]\s*\d{4}\s*\)\s*:\s*/,
+        ": "
+    );
+
+    // 3. Hvis hele rubrikken nu starter med ": " efter en navne-fjernelse, fjern den
+    renset = renset.replace(/^:\s+/, "");
+
+    return renset.trim();
+}
+
 // Hoved-funktion: foreslå rubrikker
 async function foreslåRubrikker() {
     const apiKey = localStorage.getItem(MISTRAL_KEY_STORAGE);
@@ -968,6 +1050,15 @@ async function foreslåRubrikker() {
 
         if (!forslag.hovedrubrik) {
             throw new Error("Intet hovedrubrik-forslag modtaget.");
+        }
+
+        // Sikkerhedsnet: fjern evt. genre-prefiks som "NYHED // OVERBLIK –",
+        // "FRANKRIG // ANALYSE –", "NEKROLOG –", "(1955-2026):" osv.
+        forslag.hovedrubrik = fjernGenrePrefix(forslag.hovedrubrik);
+        if (forslag.mellemrubrikker) {
+            for (const m of forslag.mellemrubrikker) {
+                if (m.tekst) m.tekst = fjernGenrePrefix(m.tekst);
+            }
         }
 
         // Hvis der ikke er eksisterende mellemrubrikker: håndhæv 4-7 afstandsregel
