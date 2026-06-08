@@ -88,7 +88,15 @@ const TONE_BESKRIVELSER = {
 - Ingen ordspil, ingen følelsesladet sprog
 - Tænk klassiske avis-rubrikker (Politiken, Berlingske, Information)
 
-Eksempler på faktuelle MELLEMRUBRIKKER med aktive verber:
+Eksempler på faktuelle HOVEDRUBRIKKER (op til 15 ord, fyldige nok til at give kontekst):
+Én sætning:
+- "Brændstofkrise truer europæisk luftfart efter lukning af Hormuzstrædet"
+- "IEA-direktør advarer EU om akut mangel på flybrændstof inden sommerferien"
+To sætninger:
+- "Hormuzstrædet er lukket. Nu står Europas luftfart over for en akut brændstofkrise"
+- "Lagrene tømmes hurtigt. Birol advarer om aflyste afgange allerede i juni"
+
+Eksempler på faktuelle MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - "Birol advarer mod brændstofkrise"
 - "EU forbereder nødplan"
 - "Lufthavne aflyser hundredvis af afgange"
@@ -100,7 +108,15 @@ Eksempler på faktuelle MELLEMRUBRIKKER med aktive verber:
 - Egnet til livsstil, personportrætter, og emner med menneskelig kerne
 - Tænk magasin- og featurejournalistik
 
-Eksempler på varme MELLEMRUBRIKKER med aktive verber:
+Eksempler på varme HOVEDRUBRIKKER (op til 15 ord, fyldige nok til at give kontekst):
+Én sætning:
+- "Hun mistede sin søn — nu bygger hun et fristed for andre forældre i sorg"
+- "Tre generationer i samme køkken og opskriften der binder familien sammen"
+To sætninger:
+- "Hun troede livet var slut. I haven fandt hun en ny begyndelse"
+- "Landsbyen mistede sin købmand. Så åbnede naboerne deres egne døre"
+
+Eksempler på varme MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - "Familien venter stadig på svar"
 - "Hun finder ro i haven"
 - "Naboer rækker hånden frem"
@@ -112,7 +128,15 @@ Eksempler på varme MELLEMRUBRIKKER med aktive verber:
 - Egnet til kulturstof, kommentarer, lette emner
 - Tænk klummeagtig tone
 
-Eksempler på humoristiske MELLEMRUBRIKKER med aktive verber:
+Eksempler på humoristiske HOVEDRUBRIKKER (op til 15 ord, fyldige nok til at give kontekst):
+Én sætning:
+- "Når Mellemøsten nyser, får europæiske lufthavne lungebetændelse"
+- "Sommerferien hænger i en tynd tråd — og en endnu tyndere brændstofslange"
+To sætninger:
+- "Hormuzstrædet siger nej tak. Og så pakker sommerferien sin kuffert ud igen"
+- "Flyene stod klar. Brændstoffet glemte at møde op"
+
+Eksempler på humoristiske MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - "Brændstoffet damper væk"
 - "EU-Kommissionen sveder over kortet"
 - "Flyene står stille — og stille"
@@ -144,11 +168,13 @@ Hver mellemrubrik skal beskrive det afsnit der følger lige efter den. Du skal a
 ${toneBeskrivelse}
 
 KRAV TIL HOVEDRUBRIK:
-- Maksimum 15 ord, gerne færre
+- Maksimum 15 ord, gerne færre — men typisk 8-15 ord, IKKE så kort som en mellemrubrik
+- Må gerne være én eller to sætninger
 - Skal virke inviterende og have blikfang
 - Skal vække nysgerrighed hos læseren
 - Skal afspejle artiklens kerne
 - Journalistisk stil tilpasset den valgte tone
+- VIGTIGT: Hovedrubrikken må ALDRIG forveksles med en mellemrubrik. Mellemrubrikker er 3-5 ord; hovedrubrikken er fyldigere og giver mere kontekst.
 
 KRAV TIL MELLEMRUBRIKKER:
 - Maksimum 5 ord pr. mellemrubrik
