@@ -140,7 +140,37 @@ Eksempler på humoristiske MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
 - "Brændstoffet damper væk"
 - "EU-Kommissionen sveder over kortet"
 - "Flyene står stille — og stille"
-- "Sommerferien går i stå"`
+- "Sommerferien går i stå"`,
+
+    kreativ: `TONE: KREATIV
+- Tag chancer — overrask læseren med uventede vinkler, billedsprog eller utraditionelle formuleringer
+- Du må gerne være metaforisk, lyrisk, eller bryde med klassiske journalistiske mønstre
+- Tonen kan skifte mellem alvor og leg — det vigtigste er at rubrikken har en distinkt stemme
+- Egnet til essays, portrætter, kulturstof, og artikler der fortjener noget særligt
+- Tænk litterær journalistik, magasin-essays, eller stærke kommentarer
+
+Eksempler på kreative HOVEDRUBRIKKER (op til 15 ord, fyldige nok til at give kontekst):
+Én sætning:
+- "Et stræde lukker, og sommerens drømme falder som dominobrikker over Europa"
+- "Brændstoffet forsvandt — og med det forsvandt også illusionen om en grænseløs verden"
+To sætninger:
+- "Et smalt stræde. Et enormt problem"
+- "Engang fløj vi for at undslippe verden. Nu kan verden ikke længere undslippe os"
+
+Eksempler på kreative MELLEMRUBRIKKER (kort, 3-5 ord, aktive verber):
+- "Strædet kvæler kontinentet"
+- "Tankene tørrer ud"
+- "Birol tegner kortet om"
+- "Sommeren venter i lufthavnen"`
+};
+
+// Temperatur pr. tone. De tre første beholder samme moderate temperatur;
+// "kreativ" får højere temperatur for mere overraskende output.
+const TONE_TEMPERATUR = {
+    faktuel: 0.4,
+    varm: 0.4,
+    humoristisk: 0.4,
+    kreativ: 0.8
 };
 
 function buildRubrikPrompt(tone, harEksisterendeMellemrubrikker, antalEksisterendeMellemrubrikker) {
@@ -814,8 +844,9 @@ KRAV:
 SVARFORMAT:
 Returnér KUN selve mellemrubrikken som ren tekst — ingen anførselstegn, ingen forklaringer, ingen markdown, ingen indledning.`;
 
+        const valgtTemperatur = TONE_TEMPERATUR[tone] !== undefined ? TONE_TEMPERATUR[tone] : 0.4;
         const nyRubrik = await callMistral(haleTekst, apiKey, omformuleringsPrompt, {
-            temperature: 0.4
+            temperature: valgtTemperatur
         });
 
         // Ryd op: fjern evt. anførselstegn eller markdown der måtte være sneget sig ind
@@ -918,9 +949,10 @@ async function foreslåRubrikker() {
             eksisterendeMellemrubrikker.length
         );
 
+        const valgtTemperatur = TONE_TEMPERATUR[tone] !== undefined ? TONE_TEMPERATUR[tone] : 0.4;
         const rawResponse = await callMistral(dokumentTekst, apiKey, prompt, {
             jsonMode: true,
-            temperature: 0.4  // lidt kreativitet til rubrikker
+            temperature: valgtTemperatur
         });
 
         // Trin 3: Parse JSON-svaret
