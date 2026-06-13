@@ -512,7 +512,7 @@ async function applyDiffToParagraph(para, ops, context) {
 // ── Mistral API-kald ─────────────────────────────────────────────────
 async function callMistral(text, apiKey, systemPrompt, opts = {}) {
     const body = {
-        model: opts.model || "mistral-medium-2508",
+        model: opts.model || "mistral-small-2603",
         temperature: opts.temperature !== undefined ? opts.temperature : 0,
         messages: [
             { role: "system", content: systemPrompt },
