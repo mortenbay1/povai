@@ -50,6 +50,9 @@ function initUI() {
 
     loadSavedSettings();
 
+    markTitleBtn.addEventListener("click", () => applyStyle("Title"));
+    markH2Btn.addEventListener("click", () => applyStyle("Heading 2"));
+    markNormalBtn.addEventListener("click", () => applyStyle("Normal"));
     markTitleBtn.addEventListener("click", () => applyStyleBuiltIn(Word.BuiltInStyleName.title, "Rubrik"));
     markH2Btn.addEventListener("click", () => applyStyleBuiltIn(Word.BuiltInStyleName.heading2, "Mellemrubrik"));
     markNormalBtn.addEventListener("click", () => applyStyleBuiltIn(Word.BuiltInStyleName.normal, "Brødtekst"));
@@ -210,6 +213,52 @@ async function applyBlockquote() {
             const insertRange = firstPara.getRange("Start");
             const newPara = insertRange.insertParagraph(selectedText, Word.InsertLocation.before);
             newPara.styleBuiltIn = Word.BuiltInStyleName.quote;
+            await context.sync();
+            setStatus(formatStatus, "Inserted blockquote below selection.", "success");
+        });
+    } catch (err) {
+        setStatus(formatStatus, "Error: " + err.message, "error");
+    }
+}
+
+async function applyUnderrubrik() {
+    setStatus(formatStatus, "", "info");
+    try {
+        await Word.run(async (context) => {
+            const range = context.document.getSelection();
+            range.load("text");
+            await context.sync();
+            if (!range.text || !range.text.trim()) {
+                setStatus(formatStatus, "Select text first, then click Underrubrik.", "info");
+                return;
+            }
+            range.font.bold = true;
+            await context.sync();
+            setStatus(formatStatus, "Applied bold (Underrubrik) to selection.", "success");
+        });
+    } catch (err) {
+        setStatus(formatStatus, "Error: " + err.message, "error");
+    }
+}
+
+async function applyBlockquote() {
+    setStatus(formatStatus, "", "info");
+    try {
+        await Word.run(async (context) => {
+            const range = context.document.getSelection();
+            range.load("text");
+            range.paragraphs.load("items");
+            await context.sync();
+            const selectedText = range.text ? range.text.trim() : "";
+            if (!selectedText) {
+                setStatus(formatStatus, "Select text first, then click Citat.", "info");
+                return;
+            }
+            const paragraphs = range.paragraphs.items;
+            const lastPara = paragraphs[paragraphs.length - 1];
+            const insertRange = lastPara.getRange("End");
+            const newPara = insertRange.insertParagraph(selectedText, Word.InsertLocation.after);
+            newPara.style = "Quote";
             await context.sync();
             setStatus(formatStatus, "Inserted blockquote below selection.", "success");
         });

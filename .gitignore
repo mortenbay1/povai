@@ -1,0 +1,8 @@
+.DS_Store
+
+node_modules/
+.office-addin-dev-certs/
+.venv-docx/
+
+# Optional: keep Apps Script ID local only
+google-docs-addon/.clasp.json

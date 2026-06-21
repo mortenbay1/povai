@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base target="_top" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Roboto, sans-serif;
+        font-size: 14px;
+        color: #323130;
+        margin: 0;
+        padding: 16px;
+        background: #faf9f8;
+      }
+      h1 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 16px 0;
+        color: #201f1e;
+      }
+      section {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #605e5c;
+        margin-bottom: 6px;
+      }
+      .hint {
+        font-size: 12px;
+        color: #605e5c;
+        margin-bottom: 8px;
+      }
+      .preview-box {
+        background: #fff;
+        border: 1px solid #edebe9;
+        border-radius: 4px;
+        padding: 10px;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 160px;
+        overflow: auto;
+      }
+      .status {
+        font-size: 12px;
+        margin-top: 8px;
+        color: #0078d4;
+      }
+      .status.error {
+        color: #a4262c;
+      }
+      button {
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #323130;
+        background: #fff;
+        border: 1px solid #8a8886;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #f3f2f1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>WordToWP</h1>
+
+    <section>
+      <label>Document</label>
+      <p class="hint">Step 3: sidebar is live. Load a preview of the document text.</p>
+      <button type="button" id="load-btn">Load document preview</button>
+      <p id="doc-name" class="status"></p>
+      <div id="preview" class="preview-box" hidden></div>
+      <p id="status" class="status"></p>
+    </section>
+
+    <script>
+      document.getElementById("load-btn").addEventListener("click", function () {
+        var statusEl = document.getElementById("status");
+        var previewEl = document.getElementById("preview");
+        var nameEl = document.getElementById("doc-name");
+        statusEl.textContent = "Loading…";
+        statusEl.classList.remove("error");
+        previewEl.hidden = true;
+
+        google.script.run
+          .withSuccessHandler(function (info) {
+            nameEl.textContent = "Name: " + info.name;
+            previewEl.textContent = info.preview;
+            previewEl.hidden = false;
+            statusEl.textContent = "Loaded.";
+          })
+          .withFailureHandler(function (err) {
+            statusEl.textContent = "Error: " + (err.message || err);
+            statusEl.classList.add("error");
+          })
+          .getActiveDocumentInfo();
+      });
+    </script>
+  </body>
+</html>

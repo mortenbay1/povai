@@ -1,0 +1,15 @@
+{
+  "name": "wordtowp-google-docs-addon",
+  "private": true,
+  "description": "Apps Script add-on for Google Docs — use npm scripts; no global clasp required",
+  "scripts": {
+    "clasp": "clasp",
+    "login": "clasp login",
+    "push": "clasp push",
+    "pull": "clasp pull",
+    "open": "clasp open"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  }
+}

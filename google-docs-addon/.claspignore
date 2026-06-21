@@ -1,0 +1,5 @@
+# Optional: only needed if you add non-Apps-Script files under src/
+# clasp only uploads from rootDir (src/) — node_modules lives outside and is never scanned.
+
+README.md
+.clasp.json.example
