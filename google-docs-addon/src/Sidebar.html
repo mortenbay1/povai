@@ -37,26 +37,49 @@
         color: #605e5c;
         margin-bottom: 8px;
       }
-      .preview-box {
-        background: #fff;
-        border: 1px solid #edebe9;
+      input[type="url"],
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 14px;
+        border: 1px solid #8a8886;
         border-radius: 4px;
-        padding: 10px;
-        font-size: 12px;
-        white-space: pre-wrap;
-        word-break: break-word;
-        max-height: 160px;
-        overflow: auto;
+        margin-bottom: 10px;
       }
-      .status {
-        font-size: 12px;
-        margin-top: 8px;
-        color: #0078d4;
+      input:focus {
+        outline: none;
+        border-color: #0078d4;
+        box-shadow: 0 0 0 1px #0078d4;
       }
-      .status.error {
-        color: #a4262c;
+      .input-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
       }
-      button {
+      .input-row input {
+        flex: 1;
+        margin-bottom: 0;
+      }
+      .btn-primary {
+        width: 100%;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: #0078d4;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: #106ebe;
+      }
+      .btn-primary:disabled {
+        background: #c8c6c4;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
         padding: 8px 14px;
         font-size: 13px;
         font-weight: 600;
@@ -66,7 +89,67 @@
         border-radius: 4px;
         cursor: pointer;
       }
-      button:hover {
+      .btn-link {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 13px;
+        color: #0078d4;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .status-text {
+        font-size: 12px;
+        margin-top: 8px;
+        min-height: 16px;
+      }
+      .status-success {
+        color: #107c10;
+      }
+      .status-error {
+        color: #a4262c;
+      }
+      .status-info {
+        color: #0078d4;
+      }
+      .password-saved-text {
+        font-size: 13px;
+        color: #107c10;
+        margin-bottom: 4px;
+      }
+      details {
+        font-size: 12px;
+        color: #605e5c;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .format-rows {
+        margin-bottom: 4px;
+      }
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .btn-format {
+        flex: 1 1 calc(33.333% - 6px);
+        min-width: 0;
+        padding: 8px 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #323130;
+        background: #fff;
+        border: 1px solid #8a8886;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .btn-format:hover {
         background: #f3f2f1;
       }
     </style>
@@ -74,37 +157,189 @@
   <body>
     <h1>WordToWP</h1>
 
+    <section id="format-section">
+      <label>Styles</label>
+      <p class="hint">Select text in the document, then apply a style.</p>
+      <div class="format-rows">
+        <div class="button-row">
+          <button type="button" class="btn-format" data-format="rubrik">Rubrik</button>
+          <button type="button" class="btn-format" data-format="underrubrik">Underrubrik</button>
+          <button type="button" class="btn-format" data-format="mellemrubrik">Mellemrubrik</button>
+        </div>
+        <div class="button-row">
+          <button type="button" class="btn-format" data-format="citat">Citat</button>
+          <button type="button" class="btn-format" data-format="brodtekst">Brødtekst</button>
+        </div>
+      </div>
+      <p id="format-status" class="status-text"></p>
+    </section>
+
+    <section id="settings-section">
+      <label for="wp-url">WordPress site URL</label>
+      <div class="input-row">
+        <input type="url" id="wp-url" placeholder="https://yoursite.com" autocomplete="url" />
+        <button type="button" id="save-btn" class="btn-secondary">Save</button>
+      </div>
+
+      <label for="wp-username">WordPress username</label>
+      <input type="text" id="wp-username" placeholder="Username" autocomplete="username" />
+
+      <div id="password-section">
+        <label for="wp-app-password">Application password</label>
+        <input
+          type="password"
+          id="wp-app-password"
+          placeholder="Users → Profile → Application Passwords"
+          autocomplete="current-password"
+        />
+      </div>
+
+      <div id="password-saved-section" class="hidden">
+        <p class="password-saved-text">Application password saved</p>
+        <button type="button" id="update-password-btn" class="btn-link">Update application password</button>
+      </div>
+
+      <p id="settings-status" class="status-text"></p>
+    </section>
+
+    <section id="publish-section">
+      <button type="button" id="publish-btn" class="btn-primary" disabled>Publish to WordPress</button>
+      <p id="publish-status" class="status-text"></p>
+    </section>
+
     <section>
-      <label>Document</label>
-      <p class="hint">Step 3: sidebar is live. Load a preview of the document text.</p>
-      <button type="button" id="load-btn">Load document preview</button>
-      <p id="doc-name" class="status"></p>
-      <div id="preview" class="preview-box" hidden></div>
-      <p id="status" class="status"></p>
+      <details>
+        <summary>How it works</summary>
+        <ol>
+          <li>In WordPress: Users → Profile → Application Passwords. Create one (e.g. “Google Docs”).</li>
+          <li>Enter URL, username, and password here. Click Save.</li>
+          <li>Publish creates a <strong>draft</strong> post and opens it in your browser.</li>
+        </ol>
+      </details>
     </section>
 
     <script>
-      document.getElementById("load-btn").addEventListener("click", function () {
-        var statusEl = document.getElementById("status");
-        var previewEl = document.getElementById("preview");
-        var nameEl = document.getElementById("doc-name");
-        statusEl.textContent = "Loading…";
-        statusEl.classList.remove("error");
-        previewEl.hidden = true;
+      function setStatus(el, message, type) {
+        el.textContent = message || "";
+        el.className = "status-text";
+        if (type) el.classList.add("status-" + type);
+      }
 
+      function refreshUiFromSettings(settings) {
+        document.getElementById("wp-url").value = settings.url || "";
+        document.getElementById("wp-username").value = settings.username || "";
+        var passSection = document.getElementById("password-section");
+        var savedSection = document.getElementById("password-saved-section");
+        var publishBtn = document.getElementById("publish-btn");
+        if (settings.hasPassword) {
+          passSection.classList.add("hidden");
+          savedSection.classList.remove("hidden");
+          publishBtn.disabled = false;
+        } else {
+          passSection.classList.remove("hidden");
+          savedSection.classList.add("hidden");
+          publishBtn.disabled = true;
+        }
+      }
+
+      var formatFnMap = {
+        rubrik: "formatRubrik",
+        mellemrubrik: "formatMellemrubrik",
+        underrubrik: "formatUnderrubrik",
+        citat: "formatCitat",
+        brodtekst: "formatBrodtekst"
+      };
+
+      function runFormat(action) {
+        var fnName = formatFnMap[action];
+        if (!fnName) return;
+        var el = document.getElementById("format-status");
+        setStatus(el, "Applying…", "info");
         google.script.run
-          .withSuccessHandler(function (info) {
-            nameEl.textContent = "Name: " + info.name;
-            previewEl.textContent = info.preview;
-            previewEl.hidden = false;
-            statusEl.textContent = "Loaded.";
+          .withSuccessHandler(function (res) {
+            if (res && res.ok) {
+              setStatus(el, "Applied.", "success");
+            } else {
+              setStatus(el, (res && res.error) || "Could not apply style.", "error");
+            }
           })
           .withFailureHandler(function (err) {
-            statusEl.textContent = "Error: " + (err.message || err);
-            statusEl.classList.add("error");
+            setStatus(el, String(err.message || err), "error");
           })
-          .getActiveDocumentInfo();
+          [fnName]();
+      }
+
+      function init() {
+        var formatBtns = document.querySelectorAll(".btn-format");
+        for (var b = 0; b < formatBtns.length; b++) {
+          formatBtns[b].addEventListener("click", function (ev) {
+            var action = ev.currentTarget.getAttribute("data-format");
+            runFormat(action);
+          });
+        }
+        google.script.run.withSuccessHandler(refreshUiFromSettings).withFailureHandler(function (err) {
+          setStatus(document.getElementById("settings-status"), String(err.message || err), "error");
+        }).loadSettings();
+      }
+
+      document.getElementById("save-btn").addEventListener("click", function () {
+        var url = document.getElementById("wp-url").value.trim();
+        var user = document.getElementById("wp-username").value.trim();
+        var pass = document.getElementById("wp-app-password").value.trim().replace(/\s/g, "");
+        setStatus(document.getElementById("settings-status"), "Saving…", "info");
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (res.ok) {
+              document.getElementById("wp-app-password").value = "";
+              setStatus(document.getElementById("settings-status"), "Settings saved.", "success");
+              google.script.run.withSuccessHandler(refreshUiFromSettings).loadSettings();
+            } else {
+              setStatus(document.getElementById("settings-status"), res.error || "Save failed.", "error");
+            }
+          })
+          .withFailureHandler(function (err) {
+            setStatus(document.getElementById("settings-status"), String(err.message || err), "error");
+          })
+          .saveSettings(url, user, pass);
       });
+
+      document.getElementById("update-password-btn").addEventListener("click", function () {
+        google.script.run.withSuccessHandler(function () {
+          document.getElementById("wp-app-password").value = "";
+          google.script.run.withSuccessHandler(refreshUiFromSettings).loadSettings();
+          setStatus(document.getElementById("settings-status"), "Enter new application password and click Save.", "info");
+        }).clearStoredPassword();
+      });
+
+      document.getElementById("publish-btn").addEventListener("click", function () {
+        var publishBtn = document.getElementById("publish-btn");
+        var publishStatus = document.getElementById("publish-status");
+        publishBtn.disabled = true;
+        setStatus(publishStatus, "Publishing…", "info");
+        google.script.run
+          .withSuccessHandler(function (res) {
+            publishBtn.disabled = false;
+            if (res.ok) {
+              setStatus(
+                publishStatus,
+                'Draft created: "' + (res.title || "") + '". Opening editor…',
+                "success"
+              );
+              if (res.editUrl) {
+                window.open(res.editUrl, "_blank");
+              }
+            } else {
+              setStatus(publishStatus, res.error || "Publish failed.", "error");
+            }
+          })
+          .withFailureHandler(function (err) {
+            publishBtn.disabled = false;
+            setStatus(publishStatus, String(err.message || err), "error");
+          })
+          .publishDraft();
+      });
+
+      init();
     </script>
   </body>
 </html>

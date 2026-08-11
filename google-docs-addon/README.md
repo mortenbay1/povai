@@ -1,6 +1,6 @@
 # WordToWP — Google Docs add-on (Apps Script)
 
-Sidebar add-on that mirrors the Word add-in: WordPress publishing and formatting (wired up in later steps).
+Sidebar add-on that mirrors the Word add-in: WordPress publishing and paragraph styles (Rubrik, Underrubrik, etc.).
 
 ## Prerequisites
 
@@ -48,12 +48,6 @@ Sidebar add-on that mirrors the Word add-in: WordPress publishing and formatting
 
 5. In the Apps Script editor, open **Deploy** → **Test deployments** → select **Editor Add-on** (or install the test add-on for Docs). Open a **Google Doc** → **Extensions** → your add-on → **Open WordToWP**.
 
-## What step 3 includes
-
-- `src/appsscript.json` — V8 runtime, OAuth scopes for current document, sidebar UI, and external HTTP (for WordPress later).
-- `src/Code.gs` — `onOpen` menu, `showSidebar`, and `getActiveDocumentInfo()` sample.
-- `src/Sidebar.html` — sidebar with **Load document preview** to verify `google.script.run` ↔ server.
-
 ## Git
 
 - Commit everything **except** `.clasp.json` if you prefer not to store the Script ID in the repo (optional). Otherwise commit `.clasp.json` so the team shares one project ID.
@@ -64,7 +58,27 @@ Add to the parent repo’s `.gitignore` (optional):
 google-docs-addon/.clasp.json
 ```
 
-## Next steps (M2+)
+## Implemented (M2 + M3 + formatting)
 
-- Save WordPress URL / username / app password in `PropertiesService`.
-- Implement publish + HTML export + formatting buttons.
+- **Settings:** WordPress URL, username, and application password stored in `PropertiesService` (per user). **Save** / **Update application password** match the Word add-in flow.
+- **Publish:** Converts the document body to HTML (paragraphs, headings h1–h6, bold, italic, simple lists, **blockquote** for paragraphs with **Subtitle** style) and creates a **draft** via `POST /wp-json/wp/v2/posts`. Opens the WordPress post editor in a new tab.
+- **Styles (sidebar):** **Rubrik** (Title), **Mellemrubrik** (Heading 2), **Brødtekst** (Normal), **Underrubrik** (Normal + bold selection), **Citat** (inserts selected text as a new paragraph with **Subtitle** style; Google Docs has no block-quote enum, so this maps to `<blockquote>` on export). Avoid using the built-in Subtitle style for non-quotes if you need those paragraphs to stay regular body text in WordPress.
+
+## Sharing the add-on without the public Workspace Marketplace
+
+You do **not** have to publish to the public [Google Workspace Marketplace](https://workspace.google.com/marketplace) for a small team or pilot.
+
+1. **Test deployment (typical for collaborators)**  
+   In Apps Script: **Deploy** → **Test deployments** → create or select a **Test** deployment of the **Editor Add-on** (Google Docs). Add each user’s Google account as a **test user** (or use the project’s test-install flow your Google Cloud / Apps Script version shows). Those users install the add-on from the **test install link** or **Extensions** → **Add-ons** → **Get add-ons** → **My add-ons** / internal testing, depending on the UI. They use the add-on like a normal install; it is not listed publicly.
+
+2. **Google Workspace domain only (organization)**  
+   A Google Workspace **admin** can deploy and assign add-ons for your domain without a public listing (domain-wide or allowlisted apps). Exact steps depend on your admin console version; search for “domain install Google Workspace add-on” in your admin help.
+
+3. **Private / unlisted Marketplace listing**  
+   Some organizations use a **private** Marketplace app (visible only to your domain). That still goes through Marketplace infrastructure but is not “public to the world.”
+
+For day-to-day development, **Test deployments** plus listed test users is usually enough until you want a formal listing.
+
+## Next steps
+
+- Richer HTML (links, tables) to align with the Word add-in where needed.
