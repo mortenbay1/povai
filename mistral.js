@@ -56,11 +56,34 @@ Du må aldrig:
 
 Når du er i tvivl: lad teksten stå uændret.
 
+KONKRETE EKSEMPLER PÅ FORKERT ADFÆRD (set ske i praksis — undgå præcis dette):
+
+1. Tilføjelse af et ord der ikke var der:
+   Original: "Lørdag var kun mindre grupper tilbage i byen."
+   FORKERT:  "Lørdag var der kun mindre grupper tilbage i byen."
+   → "der" er tilføjet. Selvom sætningen lyder mere flydende med "der", er
+     det et nyt ord der ikke fandtes i originalen. Det er indholdstilføjelse,
+     ikke en tegnsætnings- eller bøjningsrettelse. RIGTIGT er at lade
+     originalen stå urørt, uanset hvor akavet den lyder.
+
+2. Ét ord erstattet af et synonym:
+   Original: "der dagen før havde overskredet grænsen"
+   FORKERT:  "der dagen forinden havde overskredet grænsen"
+   → "før" og "forinden" betyder det samme, men det er stadig et ordskifte,
+     ikke en stavefejlsrettelse. "før" er hverken forkert stavet eller
+     forkert bøjet. RIGTIGT er at lade "før" stå.
+
+Disse to eksempler er repræsentative for den type fejl du IKKE må lave, selv
+når resultatet lyder mere naturligt eller mere korrekt. En tekst der lyder
+lidt akavet, men er 100% tro mod originalens ord og ordrækkefølge, er et
+korrekt resultat. En tekst der lyder bedre, men indeholder ét tilføjet eller
+ombyttet ord, er et FORKERT resultat.
+
 Returner kun den rettede tekst — ingen kommentarer, ingen forklaringer, ingen indledning.
 Brug ALDRIG markdown-formatering: ingen **, ingen *, ingen #, ingen -.`;
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
-const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v6";
+const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v7";
 
 // Kun disse sektionsnumre fra pov-stilguide.md er relevante for korrektur
 // (tegnsætning/typografi + de eksplicitte LLM-korrekturregler). Resten
@@ -439,6 +462,81 @@ function isWordOrderOnlyChange(originalText, revisedText) {
     return true;
 }
 
+// ── Sikkerhedstjek: opdag tilføjede/slettede ord og synonymbytte ────────
+// Ægte stavefejl-, bøjnings- og tegnsætningsrettelser er ALTID enten:
+//   (a) et helt ord ændret til en nær-identisk variant af sig selv
+//       (stavefejl/bøjning — lille redigeringsafstand), eller
+//   (b) rent tegnsætning/mellemrum tilføjet eller fjernet.
+// De er ALDRIG en helt ny ord-token indsat eller fjernet uden erstatning
+// (det er indholdstilføjelse/-sletning, fx den observerede indsættelse af
+// "der"), og ALDRIG et ord erstattet af et helt andet ord med samme
+// betydning (synonymbytte, fx "før" → "forinden") — begge dele er
+// eksplicit forbudt i prompten, men er set ske alligevel. Ligesom
+// isWordOrderOnlyChange er dette en hård stopklods der ikke er afhængig af
+// at Mistral rent faktisk overholder instruksen.
+function containsWordChar(s) {
+    return /[\p{L}\p{N}]/u.test(s || "");
+}
+
+function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    const dp = Array.from({ length: m + 1 }, () => new Int32Array(n + 1));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            dp[i][j] = Math.min(
+                dp[i - 1][j] + 1,
+                dp[i][j - 1] + 1,
+                dp[i - 1][j - 1] + cost
+            );
+        }
+    }
+    return dp[m][n];
+}
+
+// Er deleteText → insertText en plausibel stavefejl-/bøjningsrettelse af
+// SAMME ord (lille redigeringsafstand), frem for et helt andet ord
+// (synonymbytte)?
+function isPlausibleSpellingOrInflectionFix(deleteWord, insertWord) {
+    const a = deleteWord.toLowerCase();
+    const b = insertWord.toLowerCase();
+    if (a === b) return true; // kun forskel i store/små bogstaver
+    const dist = levenshtein(a, b);
+    const threshold = Math.max(2, Math.ceil(0.4 * Math.max(a.length, b.length)));
+    return dist <= threshold;
+}
+
+function hasDisallowedWordChange(ops) {
+    for (const op of ops) {
+        if (op.op === 'keep') continue;
+
+        if (op.op === 'insert') {
+            if (containsWordChar(op.text)) return true; // nyt ord tilføjet
+        } else if (op.op === 'delete') {
+            if (containsWordChar(op.text)) return true; // helt ord fjernet
+        } else if (op.op === 'replace') {
+            const delHasWord = containsWordChar(op.deleteText);
+            const insHasWord = containsWordChar(op.insertText);
+            if (delHasWord !== insHasWord) return true; // ord ↔ ren tegnsætning
+            if (delHasWord && insHasWord) {
+                const delWord = op.deleteText.match(/[\p{L}\p{N}]+/gu) || [];
+                const insWord = op.insertText.match(/[\p{L}\p{N}]+/gu) || [];
+                // Flere ord involveret i én enkelt replace-operation er ikke
+                // en simpel ét-ord-rettelse — for restriktivt at gætte på, afvis.
+                if (delWord.length !== 1 || insWord.length !== 1) return true;
+                if (!isPlausibleSpellingOrInflectionFix(delWord[0], insWord[0])) {
+                    return true; // for stor afstand — sandsynligt synonymbytte
+                }
+            }
+        }
+    }
+    return false;
+}
+
 // ── Tokenizer ────────────────────────────────────────────────────────
 function tokenize(text) {
     const re = /(\s+|[.,;:!?"”“„''()\[\]—–\-]|\S+)/g;
@@ -494,14 +592,19 @@ function consolidateOps(ops) {
             }
             result.push({ op: 'keep', text });
         } else {
+            // Accumulate a whole run of consecutive non-keep ops regardless
+            // of insert/delete ordering — diffTokens' backtrack doesn't
+            // guarantee delete-before-insert at a given position (a tie in
+            // the LCS table can go either way), so a single-word replacement
+            // can come out as either [delete, insert] or [insert, delete].
+            // Bucketing by type instead of assuming order keeps both cases
+            // as one clean 'replace' op instead of splitting a legitimate
+            // one-word fix into two unrelated-looking insert/delete ops.
             let deleteText = '';
-            while (i < ops.length && ops[i].op === 'delete') {
-                deleteText += ops[i].text;
-                i++;
-            }
             let insertText = '';
-            while (i < ops.length && ops[i].op === 'insert') {
-                insertText += ops[i].text;
+            while (i < ops.length && ops[i].op !== 'keep') {
+                if (ops[i].op === 'delete') deleteText += ops[i].text;
+                else if (ops[i].op === 'insert') insertText += ops[i].text;
                 i++;
             }
 
@@ -683,6 +786,14 @@ async function autoRedigér() {
 
                 const numChanges = ops.filter(o => o.op !== 'keep').length;
                 if (numChanges === 0) continue;
+
+                if (hasDisallowedWordChange(ops)) {
+                    console.warn(
+                        "Sprunget over — indeholder tilføjet/slettet ord eller synonymbytte, ikke en gyldig stavefejl/bøjnings/tegnsætningsrettelse:",
+                        originalText.slice(0, 80)
+                    );
+                    continue;
+                }
 
                 const keepLength = ops.filter(o => o.op === 'keep')
                     .reduce((sum, o) => sum + o.text.length, 0);
