@@ -30,13 +30,25 @@ Tekstens struktur er ukrænkelig:
 - Bevar alle afsnit i deres oprindelige rækkefølge og længde
 - Slet, flet eller forkort ikke afsnit
 
+ORDRÆKKEFØLGEN ER HELLIG — dette er lige så vigtigt som forbuddet mod at
+erstatte ord: Hvert ord skal blive stående i nøjagtig samme position i
+sætningen som i originalen. Du retter et ords stavning eller bøjning dér
+hvor det allerede står. Du må ALDRIG flytte et ord, en sætningsled eller
+et helt sætningsstykke til en anden position i sætningen — heller ikke
+selvom det ville lyde mere flydende, mere grammatisk korrekt eller mere
+naturligt. Hvis en sætning som helhed virker akavet, men de enkelte ord er
+stavet og bøjet korrekt, skal sætningen stå fuldstændig urørt. Omrokering
+af ord tæller som omformulering, uanset hvor lille flytningen er.
+
 Du retter kun:
 - Stavefejl og slåfejl (fx "hsue" → "huse")
-- Bøjningsfejl (fx forkert køn, tal, kasus, verbalform)
+- Bøjningsfejl (fx forkert køn, tal, kasus, verbalform) — rettet på stedet,
+  uden at ordet flyttes
 - Manglende eller forkert tegnsætning
 
 Du må aldrig:
 - Erstatte et ord med et synonym, uanset hvor "bedre" det lyder
+- Flytte ord, sætningsled eller frasepar til et andet sted i sætningen
 - Omformulere sætninger der allerede er korrekte
 - Tilføje eller fjerne indhold
 - Ændre genrekoder som "NYHED // OVERBLIK" eller lignende
@@ -48,7 +60,24 @@ Returner kun den rettede tekst — ingen kommentarer, ingen forklaringer, ingen 
 Brug ALDRIG markdown-formatering: ingen **, ingen *, ingen #, ingen -.`;
 
 // ── Hent stilguide fra GitHub ────────────────────────────────────────
-const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v5";
+const STILGUIDE_CACHE_KEY = "pov_stilguide_cache_v6";
+
+// Kun disse sektionsnumre fra pov-stilguide.md er relevante for korrektur
+// (tegnsætning/typografi + de eksplicitte LLM-korrekturregler). Resten
+// (genrekoder, manchetformat, overskriftsstil, kildeattribution, struktur,
+// metadata, fotocredits) er skrevet til rubrik-forslag/redaktionel brug og
+// er kun støj i en korrektur-prompt — jo mere "sådan skriver POV godt"-stof
+// modellen ser, jo mere fristes den til at omskrive frem for kun at rette.
+const STILGUIDE_KORREKTUR_SEKTIONER = [5, 10];
+
+function extractStilguideSections(markdown, sectionNumbers) {
+    const chunks = markdown.split(/\n-{3,}\n/);
+    const wanted = chunks.filter((chunk) => {
+        const m = chunk.match(/^\s*#{1,2}\s*(\d+)\./m);
+        return m && sectionNumbers.includes(Number(m[1]));
+    });
+    return wanted.join("\n\n---\n\n").trim();
+}
 
 async function buildSystemPrompt() {
     const cached = sessionStorage.getItem(STILGUIDE_CACHE_KEY);
@@ -58,15 +87,26 @@ async function buildSystemPrompt() {
         const response = await fetch(STILGUIDE_URL, { cache: "no-cache" });
         if (!response.ok) throw new Error("HTTP " + response.status);
 
-        const stilguide = await response.text();
+        const stilguideFull = await response.text();
+        // Fald tilbage til hele dokumentet hvis sektionsudtræk ikke finder
+        // noget (fx hvis overskrifterne i stilguiden ændres) — bedre med for
+        // meget kontekst end en tom/ubrugelig prompt.
+        const stilguide =
+            extractStilguideSections(stilguideFull, STILGUIDE_KORREKTUR_SEKTIONER) ||
+            stilguideFull;
+
         const prompt = MISTRAL_BASE_PROMPT +
-            "\n\n---\n\nStilguiden herunder er formateret i markdown til læsbarhed — " +
-            "det er KUN referencemateriale. Dit output må aldrig indeholde markdown.\n\n" +
+            "\n\n---\n\nUddraget herunder er de dele af POV's stilguide der er relevante " +
+            "for korrektur (tegnsætning/typografi + de eksplicitte korrekturregler). " +
+            "Formateret i markdown til læsbarhed — det er KUN referencemateriale. " +
+            "Dit output må aldrig indeholde markdown.\n\n" +
             stilguide +
-            "\n\n---\n\nABSOLUT REGEL: Du må kun rette stavefejl og grammatiske fejl. " +
-            "Du må ikke omskrive, omformulere, erstatte ord eller ændre sætningsstruktur — " +
-            "hverken ud fra stilguiden ovenfor eller din egen vurdering. " +
-            "Hvis du er i tvivl, lader du teksten stå uændret.";
+            "\n\n---\n\nABSOLUT REGEL: Du må kun rette stavefejl, bøjningsfejl og " +
+            "tegnsætning. Du må ikke omskrive, omformulere, erstatte ord, flytte " +
+            "ord eller sætningsled til en anden position, eller ændre sætningsstruktur " +
+            "på nogen måde — hverken ud fra stilguiden ovenfor eller din egen vurdering. " +
+            "Ordrækkefølgen skal være 100% identisk med originalen, ord for ord. " +
+            "Hvis du er i tvivl, lader du teksten stå fuldstændig uændret.";
 
         sessionStorage.setItem(STILGUIDE_CACHE_KEY, prompt);
         return prompt;
@@ -370,6 +410,35 @@ function postProcess(text) {
     return text;
 }
 
+// ── Sikkerhedstjek: opdag ren omrokering af ord ──────────────────────
+// Hvis originalen og den reviderede tekst indeholder præcis de samme ord
+// (normaliseret, sorteret), bare i en anden rækkefølge, er der IKKE tale om
+// en stavefejl-, bøjnings- eller tegnsætningsrettelse — for så ville mindst
+// ét ord reelt være ændret. Det er sætningsomstrukturering, som prompten
+// eksplicit forbyder. Dette er et hårdt kodet stopklods der ikke er
+// afhængigt af at Mistral rent faktisk følger instruksen — den slags
+// omrokering er set ske selv med eksplicitte forbud i prompten.
+function isWordOrderOnlyChange(originalText, revisedText) {
+    const normalize = (t) => (t.toLowerCase().match(/[\p{L}\p{N}]+/gu) || []);
+    const a = normalize(originalText);
+    const b = normalize(revisedText);
+    if (a.length === 0 || a.length !== b.length) return false;
+
+    // Same word sequence in the same order → not a reorder (e.g. a pure
+    // punctuation/case fix with zero word-token changes). Nothing to flag.
+    if (a.every((w, i) => w === b[i])) return false;
+
+    // Different order — only flag it if it's the exact same multiset of
+    // words rearranged. If any word actually changed, this is a real edit
+    // (typo/inflection fix), not pure restructuring.
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    for (let i = 0; i < sortedA.length; i++) {
+        if (sortedA[i] !== sortedB[i]) return false;
+    }
+    return true;
+}
+
 // ── Tokenizer ────────────────────────────────────────────────────────
 function tokenize(text) {
     const re = /(\s+|[.,;:!?"”“„''()\[\]—–\-]|\S+)/g;
@@ -598,6 +667,14 @@ async function autoRedigér() {
                 const revisedText = rawText ? postProcess(rawText) : rawText;
 
                 if (!revisedText || revisedText === originalText) continue;
+
+                if (isWordOrderOnlyChange(originalText, revisedText)) {
+                    console.warn(
+                        "Sprunget over — Mistral omrokerede ord uden reelle rettelser (samme ord, anden rækkefølge):",
+                        originalText.slice(0, 80)
+                    );
+                    continue;
+                }
 
                 const aTokens = tokenize(originalText);
                 const bTokens = tokenize(revisedText);

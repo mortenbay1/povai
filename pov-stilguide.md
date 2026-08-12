@@ -164,6 +164,7 @@ Disse regler skal altid overholdes:
 6. **Fed tekst kun i manchetten** — aldrig i brødteksten
 7. **Ændr ikke noget der ligner et bevidst redaktionelt ordvalg** — hvis du er i tvivl, lad det stå uændret
 8. **Brug altid “ og ” som anførselstegn** — aldrig rettet `"tekst"`, aldrig guillemets `»«`
+9. **Flyt aldrig ord, sætningsled eller frasepar til en anden position i sætningen.** Ordrækkefølgen skal være 100% identisk med originalen. En sætning der lyder akavet, men hvor alle ord er stavet og bøjet korrekt, skal stå fuldstændig urørt — omrokering er omformulering, uanset hvor lille flytningen er
 
 ---
 
