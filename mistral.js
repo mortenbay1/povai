@@ -766,7 +766,14 @@ async function autoRedigér() {
                     `Analyserer afsnit ${i + 1} af ${items.length}…`,
                     "info");
 
-                const rawText = await callMistral(originalText, apiKey, systemPrompt);
+                // temperature 0.1, ikke 0: eksperiment for at se om ren greedy
+                // decoding (0) bidrager til de observerede fejl (tilføjede ord,
+                // synonymbytte, omrokering). Ingen stærk teoretisk grund til at
+                // forvente forbedring — højere temperatur øger typisk variation,
+                // ikke præcision — men det er billigt at teste, og
+                // hasDisallowedWordChange()/isWordOrderOnlyChange() fanger
+                // stadig ægte overtrædelser uanset hvad modellen foreslår.
+                const rawText = await callMistral(originalText, apiKey, systemPrompt, { temperature: 0.1 });
                 const revisedText = rawText ? postProcess(rawText) : rawText;
 
                 if (!revisedText || revisedText === originalText) continue;
